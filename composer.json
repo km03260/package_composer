@@ -1,0 +1,23 @@
+{
+    "name": "gedivepro/userprofile",
+    "description": "User profile & SSO package",
+    "type": "library",
+    "license": "MIT",
+
+    "autoload": {
+        "psr-4": {
+            "Gedivepro\\UserProfile\\": "src/"
+        }
+    },
+
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Gedivepro\\UserProfile\\UserProfileServiceProvider"
+            ]
+        }
+    },
+
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
