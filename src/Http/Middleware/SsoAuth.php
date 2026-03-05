@@ -1,6 +1,6 @@
 <?php
 
-namespace Gedivepro\UserProfile\Http\Middleware;
+namespace DevOps213\SSOauthenticated\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;

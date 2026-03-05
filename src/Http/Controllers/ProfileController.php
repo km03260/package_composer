@@ -1,6 +1,6 @@
 <?php
 
-namespace Gedivepro\UserProfile\Http\Controllers;
+namespace DevOps213\SSOauthenticated\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;

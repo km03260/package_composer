@@ -1,6 +1,6 @@
 <?php
 
-namespace Gedivepro\UserProfile\Console;
+namespace DevOps213\SSOauthenticated\Console;
 
 use Illuminate\Console\Command;
 

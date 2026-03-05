@@ -1,12 +1,12 @@
 <?php
 
-namespace Gedivepro\UserProfile;
+namespace DevOps213\SSOauthenticated;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
-use Gedivepro\UserProfile\Console\InstallUserProfile;
-use Gedivepro\UserProfile\Http\Middleware\SsoAuth;
+use DevOps213\SSOauthenticated\Console\InstallUserProfile;
+use DevOps213\SSOauthenticated\Http\Middleware\SsoAuth;
 
 class UserProfileServiceProvider extends ServiceProvider
 {
@@ -42,7 +42,7 @@ class UserProfileServiceProvider extends ServiceProvider
         $this->app['router']->aliasMiddleware('sso.auth', SsoAuth::class);
 
         // 6️⃣ Register Blade components
-        Blade::component('userprofile-layout-main', \Gedivepro\UserProfile\View\Components\Layout\Main::class);
+        Blade::component('userprofile-layout-main', \DevOps213\SSOauthenticated\View\Components\Layout\Main::class);
 
         // 7️⃣ Register console commands
         if ($this->app->runningInConsole()) {
@@ -67,7 +67,7 @@ class UserProfileServiceProvider extends ServiceProvider
     protected function registerRoutes(): void
     {
         Route::group([
-            'namespace' => 'Gedivepro\UserProfile\Http\Controllers',
+            'namespace' => 'DevOps213\SSOauthenticated\Http\Controllers',
             'middleware' => ['web'],
             'prefix' => 'userprofile',
         ], function () {

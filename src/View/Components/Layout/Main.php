@@ -1,6 +1,6 @@
 <?php
 
-namespace Gedivepro\UserProfile\View\Components\Layout;
+namespace DevOps213\SSOauthenticated\View\Components\Layout;
 
 use Illuminate\View\Component;
 
