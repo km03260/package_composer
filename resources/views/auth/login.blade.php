@@ -48,12 +48,9 @@
             <div id="message" class="mt-4 text-sm"></div>
         </div>
     </x-slot>
+
     <x-slot name="extraJs">
-        const sso = new SsoClient({
-        ssoServerUrl: '{{ config('sso.server_url') }}',
-        clientId: '{{ config('sso.client_id') }}',
-        scopes: ['read', 'write']
-        });
+        const sso = window.SSO;
 
         checkLoginStatus();
 
