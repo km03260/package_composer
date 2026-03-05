@@ -36,6 +36,10 @@ class SSOAuthenticatedServiceProvider extends ServiceProvider
             __DIR__ . '/../config/sso.php' => config_path('sso.php'),
         ], 'ssoauth-config');
 
+        $this->publishes([
+            __DIR__ . '/../routes/web.php' => base_path('routes/ssoauthenticated.php'),
+        ], 'sso-routes');
+
         // 5️⃣ Register routes
         $this->registerRoutes();
 
