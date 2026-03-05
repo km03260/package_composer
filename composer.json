@@ -1,6 +1,8 @@
 {
     "name": "213devops/ssoauthenticated",
-    "description": "SSO authentication package",
+    "description": "Laravel SSO Authentication package",
+    "type": "library",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "DevOps213\\SSOauthenticated\\": "src/"
@@ -15,8 +17,6 @@
     },
     "require": {
         "php": "^8.1",
-        "illuminate/support": "^10|^11"
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+        "illuminate/support": "^10.0|^11.0"
+    }
 }

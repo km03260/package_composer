@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 use DevOps213\SSOauthenticated\Console\InstallUserProfile;
 use DevOps213\SSOauthenticated\Http\Middleware\SsoAuth;
 
-class UserProfileServiceProvider extends ServiceProvider
+class SSOAuthenticatedServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap services.
