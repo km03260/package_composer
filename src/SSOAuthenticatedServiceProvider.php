@@ -12,37 +12,37 @@ class SSOAuthenticatedServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        // Load views with namespace "ssoauth"
-        $this->loadViewsFrom(__DIR__ . '/Resources/views', 'ssoauth');
+        // 1️⃣ Load views from package root 'resources/views'
+        $this->loadViewsFrom(base_path('packages/ssoauthenticated/resources/views'), 'ssoauth');
 
-        // Publish views
+        // 2️⃣ Publish views for customization
         $this->publishes([
-            __DIR__ . '/Resources/views' => resource_path('views/vendor/ssoauth'),
+            base_path('packages/ssoauthenticated/resources/views') => resource_path('views/vendor/ssoauth'),
         ], 'ssoauth-views');
 
-        // Publish JS assets
-        $jsPath = __DIR__ . '/assets/js';
+        // 3️⃣ Publish JS assets from src/Assets/js
+        $jsPath = base_path('packages/ssoauthenticated/src/Assets/js');
         if (is_dir($jsPath)) {
             $this->publishes([
                 $jsPath => public_path('ssoauth/js'),
             ], 'ssoauth-assets');
         }
 
-        // Publish config
+        // 4️⃣ Publish configuration file
         $this->publishes([
-            __DIR__ . '/../config/sso.php' => config_path('sso.php'),
+            base_path('packages/ssoauthenticated/config/sso.php') => config_path('sso.php'),
         ], 'ssoauth-config');
 
-        // Register package routes
+        // 5️⃣ Register routes
         $this->registerRoutes();
 
-        // Register middleware
+        // 6️⃣ Register middleware alias
         $this->app['router']->aliasMiddleware('sso.auth', SsoAuth::class);
 
-        // Register Blade component
+        // 7️⃣ Register Blade components
         Blade::component('ssoauth-layout-main', \DevOps213\SSOauthenticated\View\Components\Layout\Main::class);
 
-        // Register install command
+        // 8️⃣ Register console commands
         if ($this->app->runningInConsole()) {
             $this->commands([
                 InstallSSOAuthenticated::class,
@@ -52,7 +52,8 @@ class SSOAuthenticatedServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/sso.php', 'sso');
+        // Merge default config
+        $this->mergeConfigFrom(base_path('packages/ssoauthenticated/config/sso.php'), 'sso');
     }
 
     protected function registerRoutes(): void
@@ -62,7 +63,7 @@ class SSOAuthenticatedServiceProvider extends ServiceProvider
             'middleware' => ['web'],
             'prefix' => 'sso',
         ], function () {
-            $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+            $this->loadRoutesFrom(base_path('packages/ssoauthenticated/routes/web.php'));
         });
     }
 }
