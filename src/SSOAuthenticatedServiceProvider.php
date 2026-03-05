@@ -20,14 +20,14 @@ class SSOAuthenticatedServiceProvider extends ServiceProvider
 
         // 2️⃣ Publish views for customization
         $this->publishes([
-            __DIR__ . '/../resources/views' => resource_path('views/vendor/ssoauth'),
+            __DIR__ . '/../resources/views' => resource_path('views/ssoauth'),
         ], 'ssoauth-views');
 
         // 3️⃣ Publish JS assets if exist
         $jsPath = __DIR__ . '/../Assets/js';
         if (is_dir($jsPath)) {
             $this->publishes([
-                $jsPath => public_path('vendor/ssoauth/js'),
+                $jsPath => public_path('ssoauth/js'),
             ], 'ssoauth-assets');
         }
 
