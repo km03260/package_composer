@@ -104,7 +104,7 @@
         </script>
     @endisset
 
-    <script src="{{ asset('vendor/userprofile/js/sso-client.js') }}"></script>
+    <script src="{{ asset('vendor/ssoauth/js/sso-client.js') }}"></script>
 </body>
 
 </html>

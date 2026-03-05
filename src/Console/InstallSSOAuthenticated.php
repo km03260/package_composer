@@ -9,37 +9,37 @@ class InstallSSOAuthenticated extends Command
     /**
      * The name and signature of the console command.
      */
-    protected $signature = 'userprofile:install';
+    protected $signature = 'ssoauth:install';
 
     /**
      * The console command description.
      */
-    protected $description = 'Install UserProfile package (publish config, views, assets)';
+    protected $description = 'Install ssoauth package (publish config, views, assets)';
 
     /**
      * Execute the console command.
      */
     public function handle(): int
     {
-        $this->info('Publishing UserProfile configuration...');
+        $this->info('Publishing ssoauth configuration...');
         $this->call('vendor:publish', [
-            '--tag' => 'userprofile-config',
+            '--tag' => 'ssoauth-config',
             '--force' => true,
         ]);
 
-        $this->info('Publishing UserProfile views...');
+        $this->info('Publishing ssoauth views...');
         $this->call('vendor:publish', [
-            '--tag' => 'userprofile-views',
+            '--tag' => 'ssoauth-views',
             '--force' => true,
         ]);
 
-        $this->info('Publishing UserProfile assets (JS)...');
+        $this->info('Publishing ssoauth assets (JS)...');
         $this->call('vendor:publish', [
-            '--tag' => 'userprofile-assets',
+            '--tag' => 'ssoauth-assets',
             '--force' => true,
         ]);
 
-        $this->info('UserProfile package installed successfully!');
+        $this->info('ssoauth package installed successfully!');
         $this->info('Remember to add SSO config values to your .env file.');
 
         return Command::SUCCESS;

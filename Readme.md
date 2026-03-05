@@ -11,7 +11,7 @@ SSO_SERVER_URL=https://your-sso-server.com
 SSO_CLIENT_ID=your_client_id
 SSO_CLIENT_SECRET=your_client_secret
 
-@extends('userprofile-layout-main')
+@extends('ssoauth-layout-main')
 
 @section('content')
     <h1>Welcome, {{ $user->name }}</h1>
@@ -25,7 +25,7 @@ SSO_CLIENT_SECRET=your_client_secret
 @endsection
 
 
-@extends('userprofile-layout-main')
+@extends('ssoauth-layout-main')
 
 @section('content')
     <h1>Welcome, {{ $user->name }}</h1>

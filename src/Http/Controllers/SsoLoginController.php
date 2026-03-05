@@ -12,7 +12,7 @@ class SsoLoginController extends Controller
 {
     public function login()
     {
-        return view('userprofile::auth.login');
+        return view('ssoauth::auth.login');
     }
 
     public function authentication(Request $request)

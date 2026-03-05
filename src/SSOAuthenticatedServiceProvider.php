@@ -74,7 +74,7 @@ class SSOAuthenticatedServiceProvider extends ServiceProvider
         Route::group([
             'namespace' => 'DevOps213\SSOauthenticated\Http\Controllers',
             'middleware' => ['web'],
-            'prefix' => 'sso', // easier prefix than userprofile
+            'prefix' => 'sso', // easier prefix than ssoauth
         ], function () {
             $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
         });

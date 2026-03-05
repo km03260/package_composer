@@ -23,6 +23,6 @@ class Main extends Component
      */
     public function render()
     {
-        return view('userprofile::layout.main');
+        return view('ssoauth::layout.main');
     }
 }

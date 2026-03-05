@@ -1,4 +1,4 @@
-<x-userprofile-layout-main title="Connexion">
+<x-ssoauth-layout-main title="Connexion">
     <x-slot name="title">Profil</x-slot>
     <x-slot name="content">
 
@@ -90,4 +90,4 @@
 
         </div>
     </x-slot>
-</x-userprofile-layout-main>
+</x-ssoauth-layout-main>
