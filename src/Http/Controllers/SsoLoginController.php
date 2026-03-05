@@ -12,7 +12,7 @@ class SsoLoginController extends Controller
 {
     public function login()
     {
-        return view('auth/login');
+        return view('userprofile::auth.login');
     }
 
     public function authentication(Request $request)
@@ -28,5 +28,4 @@ class SsoLoginController extends Controller
             return redirect('/login');
         }
     }
-
 }
