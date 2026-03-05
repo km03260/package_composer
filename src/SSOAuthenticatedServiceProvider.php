@@ -48,7 +48,8 @@ class SSOAuthenticatedServiceProvider extends ServiceProvider
         $this->app['router']->aliasMiddleware('sso.auth', SsoAuth::class);
 
         // 7️⃣ Register Blade components
-        Blade::component('layout.main', Main::class);
+        Blade::component('ssoauth-layout-main', Main::class);
+
         // 8️⃣ Register console commands
         if ($this->app->runningInConsole()) {
             $this->commands([
