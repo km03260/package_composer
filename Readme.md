@@ -23,6 +23,8 @@ SSO_CLIENT_SECRET=your-client-secret
 # php artisan vendor:publish --tag=DevOps213
 
 
-php artisan vendor:publish --tag=ssoauthenticated-config
-php artisan vendor:publish --tag=ssoauthenticated-views
-php artisan vendor:publish --tag=ssoauthenticated-assets
+composer require 213devops/ssoauthenticated:dev-main
+
+php artisan vendor:publish --tag=ssoauth-config
+php artisan vendor:publish --tag=ssoauth-views
+php artisan vendor:publish --tag=ssoauth-assets

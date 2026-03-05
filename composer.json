@@ -15,6 +15,12 @@
             ]
         }
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/km03260/package_composer"
+        }
+    ],
     "require": {
         "php": "^8.1",
         "illuminate/support": "^10.0|^11.0"

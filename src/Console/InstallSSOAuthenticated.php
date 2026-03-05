@@ -4,7 +4,7 @@ namespace DevOps213\SSOauthenticated\Console;
 
 use Illuminate\Console\Command;
 
-class InstallUserProfile extends Command
+class InstallSSOAuthenticated extends Command
 {
     /**
      * The name and signature of the console command.
