@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use DevOps213\SSOauthenticated\Console\InstallSSOAuthenticated;
 use DevOps213\SSOauthenticated\Http\Middleware\SsoAuth;
+use DevOps213\SSOauthenticated\View\Components\Layout\Main;
 
 class SSOAuthenticatedServiceProvider extends ServiceProvider
 {
@@ -47,8 +48,7 @@ class SSOAuthenticatedServiceProvider extends ServiceProvider
         $this->app['router']->aliasMiddleware('sso.auth', SsoAuth::class);
 
         // 7️⃣ Register Blade components
-        Blade::component('ssoauth-layout-main', \DevOps213\SSOauthenticated\View\Components\Layout\Main::class);
-
+        Blade::component('layout.main', Main::class);
         // 8️⃣ Register console commands
         if ($this->app->runningInConsole()) {
             $this->commands([
