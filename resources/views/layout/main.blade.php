@@ -1,67 +1,111 @@
-<x-slot name="extraJs">
-    const sso = window.SSO;
+<!DOCTYPE html>
+<html lang="fr">
 
-    checkLoginStatus();
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>
+        @isset($title)
+            {{ $title }}
+        @endisset
+    </title>
+    @isset($extraStyle)
+        {{ $extraStyle }}
+    @endisset
+</head>
 
-    document.getElementById('ssoLoginBtn').addEventListener('click', () => {
-        sso.loginWithPopup(
-            (userData) => {
-                showMessage('Login successful!', 'success');
-                showUserInfo(userData);
-            },
-            (error) => {
-                showMessage(error || 'Login failed', 'error');
+<body class="bg-gray-100">
+
+    <!-- NAVBAR -->
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16 items-center">
+
+                <!-- LEFT -->
+                <div class="flex items-center gap-3">
+                    <button id="menuBtn" class="md:hidden text-gray-600 hover:text-indigo-600">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+
+                    <div class="flex items-center gap-2">
+                        <div
+                            class="w-9 h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold">
+                            G
+                        </div>
+                        <span class="font-semibold text-gray-800">Gedivepro</span>
+                    </div>
+                </div>
+
+                <!-- DESKTOP MENU -->
+                <div class="hidden md:flex items-center gap-6">
+                    <a href="#" class="text-gray-700 hover:text-indigo-600">Dashboard</a>
+                    <a href="#" class="text-gray-700 hover:text-indigo-600">Modules</a>
+                    <a href="#" class="text-gray-700 hover:text-indigo-600">Sécurité</a>
+                </div>
+
+                <!-- RIGHT -->
+                <div class="relative">
+                    <button id="profileBtn" class="flex items-center gap-2 focus:outline-none">
+                        <div
+                            class="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold">
+                            JD
+                        </div>
+                        <i class="fas fa-chevron-down text-gray-500 hidden md:block"></i>
+                    </button>
+
+                    <!-- DROPDOWN -->
+                    <div id="profileMenu"
+                        class="hidden absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border border-gray-100">
+                        <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-50">Profil</a>
+                        <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-50">Sécurité</a>
+                        <div class="border-t my-1"></div>
+                        <a href="#" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                            Déconnexion
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOBILE MENU -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white border-t">
+            <a href="#" class="block px-4 py-3 hover:bg-gray-50">Dashboard</a>
+            <a href="#" class="block px-4 py-3 hover:bg-gray-50">Modules</a>
+            <a href="#" class="block px-4 py-3 hover:bg-gray-50">Sécurité</a>
+        </div>
+    </nav>
+
+    @isset($content)
+        {{ $content }}
+    @endisset
+
+    <script>
+        // Mobile menu
+        document.getElementById('menuBtn').onclick = () =>
+            document.getElementById('mobileMenu').classList.toggle('hidden');
+
+        // Profile dropdown
+        document.getElementById('profileBtn').onclick = () =>
+            document.getElementById('profileMenu').classList.toggle('hidden');
+
+        // Close on click outside
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#profileBtn')) {
+                document.getElementById('profileMenu').classList.add('hidden');
             }
-        );
-    });
+        });
+    </script>
 
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        sso.logout();
-        showMessage('Logged out successfully', 'success');
-        showLoginButton();
-    });
+    <script src="{{ asset('ssoauth/js/sso-client.js') }}"></script>
 
-    async function checkLoginStatus() {
-        if (sso.isLoggedIn()) {
-            const isValid = await sso.verifyToken();
-            if (isValid) {
-                showUserInfo(sso.getUser());
-            } else {
-                sso.logout();
-                showLoginButton();
-            }
-        }
-    }
+    @isset($extraJs)
+        <script>
+            {{ $extraJs }}
+        </script>
+    @endisset
 
-    function showUserInfo(user) {
-        document.getElementById('loginSection').classList.add('hidden');
-        document.getElementById('userSection').classList.remove('hidden');
+</body>
 
-        document.getElementById('userName').textContent = user.Prenom;
-        document.getElementById('userEmail').textContent = user.Email;
-        document.getElementById('userAvatar').textContent =
-            user.Prenom.charAt(0).toUpperCase();
-    }
-
-    function showLoginButton() {
-        document.getElementById('userSection').classList.add('hidden');
-        document.getElementById('loginSection').classList.remove('hidden');
-    }
-
-    function showMessage(text, type) {
-        const messageDiv = document.getElementById('message');
-        messageDiv.textContent = text;
-
-        messageDiv.className =
-            `mt-4 px-4 py-2 rounded-xl font-medium ${
-                type === 'error'
-                ? 'bg-red-100 text-red-700'
-                : 'bg-green-100 text-green-700'
-            }`;
-
-        setTimeout(() => {
-            messageDiv.textContent = '';
-            messageDiv.className = 'mt-4';
-        }, 3000);
-    }
-</x-slot>
+</html>
