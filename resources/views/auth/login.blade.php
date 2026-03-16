@@ -78,133 +78,130 @@
 
     <x-slot name="extraJs">
 
-        <script>
+        const sso = new SsoClient({
+        ssoServerUrl: '{{ config('sso.server_url') }}',
+        clientId: '{{ config('sso.client_id') }}',
+        scopes: ['read', 'write']
+        });
 
-            const sso = new SsoClient({
-                ssoServerUrl: '{{ config('sso.server_url') }}',
-                clientId: '{{ config('sso.client_id') }}',
-                scopes: ['read', 'write']
-            });
-
-            checkLoginStatus();
+        checkLoginStatus();
 
 
-            document.getElementById('ssoLoginBtn').addEventListener('click', () => {
+        document.getElementById('ssoLoginBtn').addEventListener('click', () => {
 
-                sso.loginWithPopup(
+        sso.loginWithPopup(
 
-                    (userData) => {
+        (userData) => {
 
-                        showMessage('Login successful!', 'success');
+        showMessage('Login successful!', 'success');
 
-                        showUserInfo(userData);
+        showUserInfo(userData);
 
-                    },
+        },
 
-                    (error) => {
+        (error) => {
 
-                        showMessage(error || 'Login failed', 'error');
+        showMessage(error || 'Login failed', 'error');
 
-                    }
+        }
 
-                );
+        );
 
-            });
-
-
-            document.getElementById('logoutBtn').addEventListener('click', () => {
-
-                sso.logout();
-
-                showMessage('Logged out successfully', 'success');
-
-                showLoginButton();
-
-            });
+        });
 
 
-            async function checkLoginStatus() {
+        document.getElementById('logoutBtn').addEventListener('click', () => {
 
-                if (sso.isLoggedIn()) {
+        sso.logout();
 
-                    const isValid = await sso.verifyToken();
+        showMessage('Logged out successfully', 'success');
 
-                    if (isValid) {
+        showLoginButton();
 
-                        showUserInfo(sso.getUser());
-
-                    } else {
-
-                        sso.logout();
-
-                        showLoginButton();
-
-                    }
-
-                }
-
-            }
+        });
 
 
-            function showUserInfo(user) {
+        async function checkLoginStatus() {
 
-                document.getElementById('loginSection').classList.add('hidden');
+        if (sso.isLoggedIn()) {
 
-                document.getElementById('userSection').classList.remove('hidden');
+        const isValid = await sso.verifyToken();
 
-                document.getElementById('userName').textContent = user.Prenom;
+        if (isValid) {
 
-                document.getElementById('userEmail').textContent = user.Email;
+        showUserInfo(sso.getUser());
 
-                document.getElementById('userAvatar').textContent =
-                    user.Prenom.charAt(0).toUpperCase();
+        } else {
 
-            }
+        sso.logout();
 
+        showLoginButton();
 
-            function showLoginButton() {
+        }
 
-                document.getElementById('userSection').classList.add('hidden');
+        }
 
-                document.getElementById('loginSection').classList.remove('hidden');
-
-            }
+        }
 
 
-            function showMessage(text, type) {
+        function showUserInfo(user) {
 
-                const messageDiv = document.getElementById('message');
+        document.getElementById('loginSection').classList.add('hidden');
 
-                messageDiv.textContent = text;
+        document.getElementById('userSection').classList.remove('hidden');
 
-                messageDiv.className =
-                    `mt-4 px-4 py-2 rounded-xl font-medium ${type === 'error'
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-green-100 text-green-700'
-                    }`;
+        document.getElementById('userName').textContent = user.Prenom;
 
-                setTimeout(() => {
+        document.getElementById('userEmail').textContent = user.Email;
 
-                    messageDiv.textContent = '';
+        document.getElementById('userAvatar').textContent =
+        user.Prenom.charAt(0).toUpperCase();
 
-                    messageDiv.className = 'mt-4';
-
-                }, 3000);
-
-            }
+        }
 
 
-            window.addEventListener('load', () => {
+        function showLoginButton() {
 
-                if (!sso.isLoggedIn()) {
+        document.getElementById('userSection').classList.add('hidden');
 
-                    document.getElementById('ssoLoginBtn').click();
+        document.getElementById('loginSection').classList.remove('hidden');
 
-                }
+        }
 
-            });
 
-        </script>
+        function showMessage(text, type) {
+
+        const messageDiv = document.getElementById('message');
+
+        messageDiv.textContent = text;
+
+        messageDiv.className =
+        `mt-4 px-4 py-2 rounded-xl font-medium ${type === 'error'
+        ? 'bg-red-100 text-red-700'
+        : 'bg-green-100 text-green-700'
+        }`;
+
+        setTimeout(() => {
+
+        messageDiv.textContent = '';
+
+        messageDiv.className = 'mt-4';
+
+        }, 3000);
+
+        }
+
+
+        window.addEventListener('load', () => {
+
+        if (!sso.isLoggedIn()) {
+
+        document.getElementById('ssoLoginBtn').click();
+
+        }
+
+        });
+
 
     </x-slot>
 
