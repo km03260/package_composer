@@ -3,7 +3,7 @@
 namespace DevOps213\SSOauthenticated\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\SsoToken;
+use DevOps213\SSOauthenticated\Models\SsoToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
