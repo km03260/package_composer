@@ -4,7 +4,7 @@ php artisan vendor:publish --tag=ssoauth-config
 php artisan vendor:publish --tag=ssoauth-views
 php artisan vendor:publish --tag=ssoauth-assets
 
-php artisan vendor:publish --tag=sso-routes
+php artisan vendor:publish --tag=ssoauth-routes
 require base_path('routes/ssoauthenticated.php');
 
 SSO_SERVER_URL=https://your-sso-server.com

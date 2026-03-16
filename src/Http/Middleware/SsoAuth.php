@@ -31,7 +31,7 @@ class SsoAuth
             session(['url.intended' => $request->fullUrl()]);
 
             // Return view with login button
-            return response()->view('auth.login');
+            return response()->view('ssoauth.auth.login');
         }
 
         // Verify token with SSO server
