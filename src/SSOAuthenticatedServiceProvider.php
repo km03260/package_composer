@@ -33,16 +33,21 @@ class SSOAuthenticatedServiceProvider extends ServiceProvider
             __DIR__ . '/../config/sso.php' => config_path('sso.php'),
         ], 'ssoauth-config');
 
-        // 5️⃣ Register routes
+        // 5️⃣ Publish routes
+        $this->publishes([
+            __DIR__ . '/../routes/web.php' => base_path('routes/ssoauthenticated.php'),
+        ], 'ssoauth-routes');
+
+        // 6️⃣ Register routes
         $this->registerRoutes();
 
-        // 6️⃣ Register middleware alias
+        // 7️⃣ Register middleware alias
         $this->app['router']->aliasMiddleware('sso.auth', SsoAuth::class);
 
-        // 7️⃣ Register Blade component
+        // 8️⃣ Register Blade component
         Blade::component('ssoauth-layout-main', \DevOps213\SSOauthenticated\View\Components\Layout\Main::class);
 
-        // 8️⃣ Register console commands
+        // 9️⃣ Register console commands
         if ($this->app->runningInConsole()) {
             $this->commands([
                 InstallSSOAuthenticated::class,
@@ -57,12 +62,28 @@ class SSOAuthenticatedServiceProvider extends ServiceProvider
 
     protected function registerRoutes(): void
     {
-        Route::group([
-            'namespace' => 'DevOps213\SSOauthenticated\Http\Controllers',
-            'middleware' => ['web'],
-            'prefix' => 'sso',
-        ], function () {
-            $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        });
+        // Check if we should use published routes or package routes
+        $publishedRoutesPath = base_path('routes/ssoauthenticated.php');
+
+        if (file_exists($publishedRoutesPath)) {
+            // If published routes exist, load them from the application routes directory
+            Route::group([
+                'namespace' => 'DevOps213\SSOauthenticated\Http\Controllers',
+                'middleware' => ['web'],
+                'prefix' => 'sso',
+            ], function () {
+                require base_path('routes/ssoauthenticated.php');
+            });
+        } else {
+            // Otherwise load from package
+            Route::group([
+                'namespace' => 'DevOps213\SSOauthenticated\Http\Controllers',
+                'middleware' => ['web'],
+                'prefix' => 'sso',
+            ], function () {
+                $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+            });
+        }
     }
+
 }
