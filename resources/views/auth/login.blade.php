@@ -86,29 +86,22 @@
 
         checkLoginStatus();
 
+        document.getElementById('ssoLoginBtn').addEventListener('click', loginSSO);
 
-        document.getElementById('ssoLoginBtn').addEventListener('click', () => {
+
+        function loginSSO() {
 
         sso.loginWithPopup(
-
         (userData) => {
-
         showMessage('Login successful!', 'success');
-
         showUserInfo(userData);
-
         },
-
         (error) => {
-
         showMessage(error || 'Login failed', 'error');
-
         }
-
         );
 
-        });
-
+        }
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
 
