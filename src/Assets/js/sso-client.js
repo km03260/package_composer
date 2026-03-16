@@ -1,4 +1,3 @@
-// public/js/sso-client.js
 class SsoClient {
     constructor(config = {}) {
         this.ssoServerUrl = config.ssoServerUrl || 'http://sso.gedivepro.test';
@@ -36,11 +35,12 @@ class SsoClient {
             'SSOLogin',
             `width=${this.popupWidth},height=${this.popupHeight},left=${(window.screen.width - this.popupWidth) / 2},top=${(window.screen.height - this.popupHeight) / 2}`
         );
-
-        if (!popup) {
-            alert('Please allow popups for this website');
-            return;
-        }
+        setTimeout(() => {
+            if (!popup) {
+                alert('Please allow popups for this website');
+                return;
+            }
+        }, 1000);
 
         // Message handler
         const messageHandler = (event) => {
