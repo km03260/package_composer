@@ -186,8 +186,7 @@
 
 
         window.addEventListener('load', () => {
-        console.log('aut clicked sign in with SSO')
-        document.getElementById('ssoLoginBtn').click();
+        loginSSO();
         });
 
 

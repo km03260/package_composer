@@ -151,7 +151,7 @@ class SsoClient {
 // Initialize
 window.SSO = new SsoClient({
     ssoServerUrl: 'http://sso.gedivepro.test',
-    clientId: '14',
+    clientId: '14', // make it dynamique
     redirectUri: window.location.origin + '/auth/sso/callback',
     scopes: ['read', 'write']
 });
