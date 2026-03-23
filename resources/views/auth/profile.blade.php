@@ -90,11 +90,14 @@
     </x-slot>
 
     <x-slot name="extraJs">
-        document.getElementById('ssoModal').style.display = 'none'
+        window.parent.document.getElementById('ssoModal').classList.add('hidden');
+        window.parent.document.getElementById('ssoIframe').src = '';
 
         setTimeout(() => {
-        window.location.href = '{{ $redirect }}';
-        }, 300);
+        window.parent.postMessage({
+        type: 'close-and-redirect',
+        url: '/'
+        }, '*')}, 300);
 
     </x-slot>
 </x-ssoauth-layout-main>
