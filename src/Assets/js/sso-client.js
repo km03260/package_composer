@@ -141,6 +141,113 @@ class SsoClient {
         popup.focus();
     }
 
+    // Open SSO login Model
+    loginWithModal(onSuccess, onError) {
+        // Clear any old state
+        localStorage.removeItem(this.stateKey);
+
+        // Generate new state
+        const state = this.generateState();
+        localStorage.setItem(this.stateKey, state);
+
+        // Build SSO login URL
+        const loginUrl = `${this.ssoServerUrl}/sso/login/popup?${new URLSearchParams({
+            client_id: this.clientId,
+            redirect_uri: this.redirectUri,
+            state: state,
+            scope: this.scopes.join(',')
+        })}`;
+
+        console.log('Opening SSO modal:', loginUrl);
+
+        // Create modal container if it doesn't exist
+        let modal = document.getElementById('ssoModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'ssoModal';
+            modal.style.cssText = `
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center;
+            z-index: 9999;
+        `;
+            modal.innerHTML = `
+            <div id="ssoModalContent" style="
+                width: ${this.popupWidth}px; 
+                height: ${this.popupHeight}px; 
+                background:#fff; border-radius:12px; overflow:hidden; position:relative;">
+                <iframe id="ssoIframe" src="" style="width:100%; height:100%; border:none;"></iframe>
+                <button id="ssoCloseBtn" style="
+                    position:absolute; top:8px; right:8px; background:#f00; color:#fff; border:none; border-radius:4px; padding:2px 6px; cursor:pointer;">
+                    ✕
+                </button>
+            </div>
+        `;
+            document.body.appendChild(modal);
+        }
+
+        // Show modal
+        modal.style.display = 'flex';
+
+        const iframe = document.getElementById('ssoIframe');
+        iframe.src = loginUrl;
+
+        // Close button
+        document.getElementById('ssoCloseBtn').onclick = () => {
+            modal.style.display = 'none';
+            onError?.('Login cancelled');
+            cleanup();
+        };
+
+        // Message handler from iframe
+        const messageHandler = (event) => {
+            console.log("event callback ", event)
+            if (event.origin !== this.ssoServerUrl) return;
+
+            console.log('SSO message received:', event.data);
+
+            if (event.data.type === 'SSO_LOGIN_SUCCESS') {
+                // Verify state
+                const storedState = localStorage.getItem(this.stateKey);
+                if (event.data.state !== storedState) {
+                    console.error('State mismatch');
+                    onError?.('Authentication failed');
+                    cleanup();
+                    return;
+                }
+
+                // Store token and user
+                if (event.data.access_token) localStorage.setItem(this.tokenKey, event.data.access_token);
+                if (event.data.user) localStorage.setItem('sso_user', JSON.stringify(event.data.user));
+
+                // Cleanup
+                localStorage.removeItem(this.stateKey);
+                cleanup();
+
+                // Hide modal
+                modal.style.display = 'none';
+
+                // Call success callback
+                onSuccess?.({
+                    token: event.data.access_token,
+                    user: event.data.user
+                });
+
+            } else if (event.data.type === 'SSO_LOGIN_ERROR') {
+                onError?.(event.data.message || 'Login failed');
+                modal.style.display = 'none';
+                cleanup();
+            }
+        };
+
+        // Cleanup function
+        const cleanup = () => {
+            window.removeEventListener('message', messageHandler);
+        };
+
+        // Listen for messages from iframe
+        window.addEventListener('message', messageHandler);
+    }
+
     generateState() {
         return Math.random().toString(36).substring(2) + Date.now().toString(36);
     }

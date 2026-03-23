@@ -11,6 +11,21 @@ SSO_SERVER_URL=https://your-sso-server.com
 SSO_CLIENT_ID=your_client_id
 SSO_CLIENT_SECRET=your_client_secret
 
+
+# add in Models\User
+
+use DevOps213\SSOauthenticated\Models\SsoToken;
+
+   /**
+     * Get matching devices
+     *
+     * @return void
+     */
+    public function matchings()
+    {
+        return $this->hasMany(MatchingUser::class, 'user_id', 'id');
+    }
+
 @extends('ssoauth-layout-main')
 
 @section('content')

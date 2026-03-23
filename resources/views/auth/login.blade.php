@@ -73,10 +73,44 @@
 
         </div>
 
+        <div id="ssoModal" class="hidden fixed inset-0 bg-black/30 flex items-center justify-center rounded-none">
+            <div
+                class="relative bg-white w-[800px] h-[500px] rounded-none overflow-hidden shadow-[10px_8px_15px_6px_#ccc]">
+
+                <button id="closeModal"
+                    class="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-xl font-bold">
+                    &times;
+                </button>
+
+                <iframe id="ssoIframe" src="" class="w-full h-full border-1 border-white rounded-none"></iframe>
+            </div>
+        </div>
+
     </x-slot>
 
 
     <x-slot name="extraJs">
+        const modal = document.getElementById('ssoModal');
+        const closeBtn = document.getElementById('closeModal');
+
+        closeBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+
+        });
+
+        // Optional: click outside modal to close
+        modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+        modal.classList.add('hidden');
+
+        }
+        });
+        function openSsoModal() {
+        const iframe = document.getElementById('ssoIframe');
+        iframe.src = `${sso.ssoServerUrl}/sso/login/popup?...`;
+        modal.classList.remove('hidden');
+        }
+
 
         const sso = new SsoClient({
         ssoServerUrl: '{{ config('sso.server_url') }}',
@@ -84,10 +118,25 @@
         scopes: ['read', 'write']
         });
 
-        checkLoginStatus();
+        <!-- checkLoginStatus(); -->
 
-        document.getElementById('ssoLoginBtn').addEventListener('click', loginSSO);
+        document.getElementById('ssoLoginBtn').addEventListener('click', () => {
 
+        loginSSOModel();
+        });
+
+        function loginSSOModel(){
+        sso.loginWithModal(
+        (data) => {
+        console.log('Logged in user:', data.user);
+        alert('Login successful!');
+        },
+        (error) => {
+        console.error(error);
+        alert(error);
+        }
+        );
+        }
 
         function loginSSO() {
 
@@ -114,7 +163,7 @@
         });
 
 
-        async function checkLoginStatus() {
+        <!-- async function checkLoginStatus() {
 
         if (sso.isLoggedIn()) {
 
@@ -134,7 +183,7 @@
 
         }
 
-        }
+        } -->
 
 
         function showUserInfo(user) {
@@ -186,7 +235,8 @@
 
 
         window.addEventListener('load', () => {
-        loginSSO();
+        document.getElementById('ssoLoginBtn').click();
+
         });
 
 

@@ -35,12 +35,22 @@ class SsoLoginController extends Controller
         }
     }
 
-    public function callback()
+    /**
+     * callback
+     * @param Request $request
+     */
+    public function callback(Request $request)
     {
         if (Auth::check()) {
             $user = Auth::user();
-            return view("auth/profile", compact('user'));
+            return view("ssoauth::auth.profile", compact('user'));
+        } elseif ($request->has('accessToken')) {
+            $user = (new SsoToken)::GetTokenRelatedUser($request->accessToken)?->user;
+
+            Auth::login($user);
+            return view("ssoauth::auth.profile", compact('user'));
+
         }
-        return view("auth/login");
+        return view("ssoauth::auth.login");
     }
 }

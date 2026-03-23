@@ -25,7 +25,7 @@
 
                 <div class="divide-y">
 
-                    @foreach ($user->matchings as $matching)
+                    @foreach ($user->matchings ?? [] as $matching)
                         <div class="py-4 flex items-center justify-between">
 
                             <div class="flex items-center gap-4">
@@ -59,8 +59,7 @@
                             <!-- STATUS -->
                             <div class="text-right">
                                 @if ($matching->confirmed_at)
-                                    <span
-                                        class="px-3 py-1 mb-3 text-xs bg-green-100 text-green-700 rounded-full font-semibold">
+                                    <span class="px-3 py-1 mb-3 text-xs bg-green-100 text-green-700 rounded-full font-semibold">
                                         Appareil confirmé
                                     </span>
                                     <br>
@@ -71,8 +70,7 @@
                                         Supprimer
                                     </span>
                                 @else
-                                    <span
-                                        class="px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full font-semibold">
+                                    <span class="px-3 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full font-semibold">
                                         En attente
                                     </span>
                                 @endif
