@@ -90,8 +90,7 @@
     </x-slot>
 
     <x-slot name="extraJs">
-        const iframe = document.getElementById('ssoIframe');
-        iframe.remove();
+        document.getElementById('ssoModal').style.display = 'none'
 
         setTimeout(() => {
         window.location.href = '{{ $redirect }}';
