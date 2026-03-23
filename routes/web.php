@@ -10,5 +10,5 @@ Route::middleware('web')->group(function () {
     Route::get('/auth/authentication', [SsoLoginController::class, 'authentication'])
         ->name('auth.sso.authentication');
 
-Route::get('', [SsoLoginController::class,
+
 });
