@@ -94,11 +94,6 @@
         window.parent.document.getElementById('ssoIframe').src = '';
         window.parent.document.getElementById('ssoModal').style.display = 'none';
 
-        setTimeout(() => {
-        window.parent.postMessage({
-        type: 'close-and-redirect',
-        url: '{{ $redirect }}'
-        }, '*')}, 300);
 
     </x-slot>
 </x-ssoauth-layout-main>
