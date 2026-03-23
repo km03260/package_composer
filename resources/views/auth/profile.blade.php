@@ -92,11 +92,12 @@
     <x-slot name="extraJs">
         window.parent.document.getElementById('ssoModal').classList.add('hidden');
         window.parent.document.getElementById('ssoIframe').src = '';
+        window.parent.document.getElementById('ssoModal').style.display = 'none';
 
         setTimeout(() => {
         window.parent.postMessage({
         type: 'close-and-redirect',
-        url: '/'
+        url: '{{ $redirect }}'
         }, '*')}, 300);
 
     </x-slot>
