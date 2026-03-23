@@ -90,8 +90,10 @@
     </x-slot>
 
     <x-slot name="extraJs">
+        document.getElementById('ssoModal').style.display = 'none';
+        setTimeout(() => {
         window.location.href = '{{ $redirect }}';
-        modal.style.display = 'none';
+        }, 300);
 
     </x-slot>
 </x-ssoauth-layout-main>
