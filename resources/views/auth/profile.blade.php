@@ -88,4 +88,10 @@
 
         </div>
     </x-slot>
+
+    <x-slot name="extraJs">
+        window.location.href = '{{ $redirect }}';
+        modal.style.display = 'none';
+
+    </x-slot>
 </x-ssoauth-layout-main>

@@ -41,16 +41,18 @@ class SsoLoginController extends Controller
      */
     public function callback(Request $request)
     {
+        $redirect = Session::get('pre_url') ?? '/';
+
         if (Auth::check()) {
             $user = Auth::user();
-            return view("ssoauth::auth.profile", compact('user'));
+            return view("ssoauth::auth.profile", compact('user', 'redirect'));
         } elseif ($request->has('accessToken')) {
             $user = (new SsoToken)::GetTokenRelatedUser($request->accessToken)?->user;
 
             Auth::login($user);
-            return view("ssoauth::auth.profile", compact('user'));
+            return view("ssoauth::auth.profile", compact('user', 'redirect'));
 
         }
-        return view("ssoauth::auth.login");
+        return view("ssoauth::auth.login", compact('redirect'));
     }
 }
