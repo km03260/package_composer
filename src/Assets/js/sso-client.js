@@ -191,13 +191,6 @@ class SsoClient {
         const iframe = document.getElementById('ssoIframe');
         iframe.src = loginUrl;
 
-        // Close button
-        document.getElementById('ssoCloseBtn').onclick = () => {
-            modal.style.display = 'none';
-            onError?.('Login cancelled');
-            cleanup();
-        };
-
         // Message handler from iframe
         const messageHandler = (event) => {
             console.log("event callback ", event)
