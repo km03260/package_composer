@@ -163,29 +163,6 @@
         });
 
 
-        <!-- async function checkLoginStatus() {
-
-        if (sso.isLoggedIn()) {
-
-        const isValid = await sso.verifyToken();
-
-        if (isValid) {
-
-        showUserInfo(sso.getUser());
-
-        } else {
-
-        sso.logout();
-
-        showLoginButton();
-
-        }
-
-        }
-
-        } -->
-
-
         function showUserInfo(user) {
 
         document.getElementById('loginSection').classList.add('hidden');
