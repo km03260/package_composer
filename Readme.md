@@ -11,6 +11,7 @@ SSO_SERVER_URL=https://your-sso-server.com
 SSO_CLIENT_ID=your_client_id
 SSO_CLIENT_SECRET=your_client_secret
 
+use this rout for logout : route('sso.logout')
 
 # add in Models\User
 

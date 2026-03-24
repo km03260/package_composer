@@ -27,8 +27,6 @@ class SsoClient {
             scope: this.scopes.join(',')
         })}`;
 
-        console.log('Opening SSO popup:', popupUrl);
-
         // Open popup
         const popup = window.open(
             popupUrl,
@@ -44,11 +42,9 @@ class SsoClient {
 
         // Message handler
         const messageHandler = (event) => {
-            console.log("here we go ......", event);
-
             // Check message type
             if (event.data.type === 'SSO_POPUP_READY') {
-                console.log('Popup is ready');
+
                 // You can send a request for token if needed
                 if (popup && !popup.closed) {
                     popup.postMessage({ type: 'SSO_REQUEST_TOKEN' }, '*');
@@ -90,7 +86,6 @@ class SsoClient {
                 cleanup();
 
             } else if (event.data.type === 'SSO_POPUP_CLOSED') {
-                console.log('Popup closed by user');
                 // Don't call onError here - let the interval handler do it
             }
         };
@@ -107,7 +102,6 @@ class SsoClient {
         // Check if popup was closed
         let checkInterval = setInterval(() => {
             if (popup.closed) {
-                console.log('Popup closed');
                 cleanup();
 
                 // Only show error if we were expecting login (state still exists)
@@ -138,8 +132,6 @@ class SsoClient {
             state: state,
             scope: this.scopes.join(',')
         })}`;
-
-        console.log('2 Opening SSO modal:', loginUrl);
 
         // Create modal container if it doesn't exist
         let modal = document.getElementById('ssoModal');
@@ -182,8 +174,6 @@ class SsoClient {
 
         // Message handler from iframe
         const messageHandler = (event) => {
-            console.log("🔥 MESSAGE RECEIVED:", event);
-            console.log("event callback ", event);
 
             // IMPORTANT: Verify origin for security
             const allowedHost = new URL(this.ssoServerUrl).host;
@@ -192,8 +182,6 @@ class SsoClient {
                 console.warn('Blocked origin:', event.origin);
                 return;
             }
-
-            console.log('SSO message received:', event.data);
 
             if (event.data.type === 'SSO_LOGIN_SUCCESS') {
                 // Verify state

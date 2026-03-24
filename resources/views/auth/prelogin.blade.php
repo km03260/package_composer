@@ -216,12 +216,6 @@
         }
 
 
-        window.addEventListener('load', () => {
-        document.getElementById('ssoLoginBtn').click();
-
-        });
-
-
     </x-slot>
 
 </x-ssoauth-layout-main>
