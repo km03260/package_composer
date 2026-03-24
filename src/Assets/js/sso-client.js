@@ -55,53 +55,34 @@ class SsoClient {
                 }
             }
             else if (event.data.type === 'SSO_LOGIN_SUCCESS') {
-                console.log(event.data.access_token);
-                console.log('Login success message received');
-
-                setTimeout(() => {
-                    window.location.href = `/auth/authentication?token=${event.data.access_token}`;
-                }, 100);
-
-                // Verify state
                 const storedState = localStorage.getItem(this.stateKey);
+
                 if (event.data.state !== storedState) {
-                    console.error('State mismatch');
                     onError?.('Authentication failed');
                     cleanup();
                     return;
                 }
 
-                // Store token
-                if (event.data.access_token) {
+                // store token
+                localStorage.setItem(this.tokenKey, event.data.access_token);
 
-                    console.log(this.tokenKey);
-
-                    localStorage.setItem(this.tokenKey, event.data.access_token);
-                }
-
-                // Store user data
                 if (event.data.user) {
                     localStorage.setItem('sso_user', JSON.stringify(event.data.user));
                 }
 
-                // Cleanup
                 localStorage.removeItem(this.stateKey);
+
                 cleanup();
 
-                // Close popup
-                try {
-                    if (popup && !popup.closed) {
-                        setTimeout(() => popup.close(), 500);
-                    }
-                } catch (e) {
-                    console.log('Popup already closed');
-                }
-
-                // Call success callback
+                // ✅ CALL SUCCESS FIRST
                 onSuccess?.({
                     token: event.data.access_token,
                     user: event.data.user
                 });
+
+                // ✅ THEN redirect (optional)
+                window.location.href = `/auth/authentication?token=${event.data.access_token}`;
+
 
             } else if (event.data.type === 'SSO_LOGIN_ERROR') {
                 console.error('Login error:', event.data.message);
@@ -158,7 +139,7 @@ class SsoClient {
             scope: this.scopes.join(',')
         })}`;
 
-        console.log('Opening SSO modal:', loginUrl);
+        console.log('2 Opening SSO modal:', loginUrl);
 
         // Create modal container if it doesn't exist
         let modal = document.getElementById('ssoModal');
@@ -166,23 +147,31 @@ class SsoClient {
             modal = document.createElement('div');
             modal.id = 'ssoModal';
             modal.style.cssText = `
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center;
-            z-index: 9999;
-        `;
+                    position: fixed; top:0; left:0; width:100%; height:100%;
+                    background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center;
+                    z-index: 9999;
+                `;
             modal.innerHTML = `
-            <div id="ssoModalContent" style="
-                width: ${this.popupWidth}px; 
-                height: ${this.popupHeight}px; 
-                background:#fff; border-radius:12px; overflow:hidden; position:relative;">
-                <iframe id="ssoIframe" src="" style="width:100%; height:100%; border:none;"></iframe>
-                <button id="ssoCloseBtn" style="
-                    position:absolute; top:8px; right:8px; background:#f00; color:#fff; border:none; border-radius:4px; padding:2px 6px; cursor:pointer;">
-                    ✕
-                </button>
-            </div>
-        `;
+                    <div id="ssoModalContent" style="
+                        width: ${this.popupWidth}px; 
+                        height: ${this.popupHeight}px; 
+                        background:#fff; border-radius:12px; overflow:hidden; position:relative;">
+                        <iframe id="ssoIframe" src="" style="width:100%; height:100%; border:none;"></iframe>
+                        <button id="ssoCloseBtn" style="
+                            position:absolute; top:8px; right:8px; background:#f00; color:#fff; border:none; border-radius:4px; padding:2px 6px; cursor:pointer;">
+                            ✕
+                        </button>
+                    </div>
+                `;
             document.body.appendChild(modal);
+
+            // Add close button event
+            const closeBtn = document.getElementById('ssoCloseBtn');
+            closeBtn.onclick = () => {
+                modal.style.display = 'none';
+                cleanup();
+                onError?.('User closed modal');
+            };
         }
 
         // Show modal
@@ -193,8 +182,16 @@ class SsoClient {
 
         // Message handler from iframe
         const messageHandler = (event) => {
-            console.log("event callback ", event)
-            if (event.origin !== this.ssoServerUrl) return;
+            console.log("🔥 MESSAGE RECEIVED:", event);
+            console.log("event callback ", event);
+
+            // IMPORTANT: Verify origin for security
+            const allowedHost = new URL(this.ssoServerUrl).host;
+
+            if (!event.origin.includes(allowedHost)) {
+                console.warn('Blocked origin:', event.origin);
+                return;
+            }
 
             console.log('SSO message received:', event.data);
 
@@ -203,14 +200,19 @@ class SsoClient {
                 const storedState = localStorage.getItem(this.stateKey);
                 if (event.data.state !== storedState) {
                     console.error('State mismatch');
-                    onError?.('Authentication failed');
+                    onError?.('Authentication failed - state mismatch');
                     cleanup();
+                    modal.style.display = 'none';
                     return;
                 }
 
                 // Store token and user
-                if (event.data.access_token) localStorage.setItem(this.tokenKey, event.data.access_token);
-                if (event.data.user) localStorage.setItem('sso_user', JSON.stringify(event.data.user));
+                if (event.data.access_token) {
+                    localStorage.setItem(this.tokenKey, event.data.access_token);
+                }
+                if (event.data.user) {
+                    localStorage.setItem('sso_user', JSON.stringify(event.data.user));
+                }
 
                 // Cleanup
                 localStorage.removeItem(this.stateKey);
@@ -225,6 +227,7 @@ class SsoClient {
                     user: event.data.user
                 });
 
+
             } else if (event.data.type === 'SSO_LOGIN_ERROR') {
                 onError?.(event.data.message || 'Login failed');
                 modal.style.display = 'none';
@@ -235,6 +238,7 @@ class SsoClient {
         // Cleanup function
         const cleanup = () => {
             window.removeEventListener('message', messageHandler);
+            iframe.src = 'about:blank';
         };
 
         // Listen for messages from iframe
@@ -247,6 +251,8 @@ class SsoClient {
 
     // ... rest of the methods (verifyToken, logout, etc.)
 }
+
+
 
 // Initialize
 window.SSO = new SsoClient({

@@ -6,11 +6,10 @@
 
     <x-slot name="content">
 
-        <div class="min-h-screen flex items-center justify-center bg-gray-100">
+        <div class="min-h-screen flex items-center justify-center bg-transparent">
 
             <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center">
 
-                <!-- Title -->
                 <h3 class="text-2xl font-bold text-gray-900 mb-2">
                     Welcome to Client Module
                 </h3>
@@ -19,7 +18,6 @@
                     Sign in with your SSO account
                 </p>
 
-                <!-- Login Section -->
                 <div id="loginSection">
 
                     <button id="ssoLoginBtn"
@@ -92,6 +90,7 @@
     <x-slot name="extraJs">
         const modal = document.getElementById('ssoModal');
         const closeBtn = document.getElementById('closeModal');
+        const iframe = document.getElementById('ssoIframe');
 
         closeBtn.addEventListener('click', () => {
         modal.style.display = 'none';
@@ -106,7 +105,6 @@
         }
         });
         function openSsoModal() {
-        const iframe = document.getElementById('ssoIframe');
         iframe.src = `${sso.ssoServerUrl}/sso/login/popup?...`;
         modal.classList.remove('hidden');
         }
@@ -125,17 +123,26 @@
         loginSSOModel();
         });
 
-        function loginSSOModel(){
+        function loginSSOModel() {
         sso.loginWithModal(
         (data) => {
         console.log('Logged in user:', data.user);
-        alert('Login successful!');
+
+        updateUserUI(data);
         },
         (error) => {
-        console.error(error);
-        alert(error);
+        console.error('Login error:', error);
+        alert('Login failed: ' + error);
         }
         );
+        }
+
+        function updateUserUI(data) {
+        window.location.href = `/auth/authentication?token=${data.token}`;
+
+        const loginBtn = document.getElementById('ssoLoginBtn');
+        loginBtn.textContent = `Welcome, ${data.user.Prenom || data.user.Email}`;
+        loginBtn.disabled = true;
         }
 
         function loginSSO() {
