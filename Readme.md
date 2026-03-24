@@ -1,32 +1,48 @@
-composer require 213devops/ssoauthenticated:dev-master
+# SSO Authenticated Package
 
+## Installation
+
+```bash
+composer require 213devops/ssoauthenticated:dev-master
+``` 
+
+## Publishing Assets
+
+```bash
 php artisan vendor:publish --tag=ssoauth-config
 php artisan vendor:publish --tag=ssoauth-views
 php artisan vendor:publish --tag=ssoauth-assets
-
 php artisan vendor:publish --tag=ssoauth-routes
-require base_path('routes/ssoauthenticated.php');
+```
+## Routes Configuration
 
+### Add this line to routes/web.php:
+
+```bash
+require base_path('routes/ssoauthenticated.php');
+```
+
+## Environment Variables
+
+### Add to .env file:
+
+```bash
 SSO_SERVER_URL=https://your-sso-server.com
 SSO_CLIENT_ID=your_client_id
 SSO_CLIENT_SECRET=your_client_secret
+```
 
-use this rout for logout : route('sso.logout')
+## Logout
 
-# add in Models\User
+### Use this route for logout:
 
-use DevOps213\SSOauthenticated\Models\SsoToken;
+```bash
+route('sso.logout')
+```
 
-   /**
-     * Get matching devices
-     *
-     * @return void
-     */
-    public function matchings()
-    {
-        return $this->hasMany(MatchingUser::class, 'user_id', 'id');
-    }
+##  Main Layout Example
 
+```bash
 @extends('ssoauth-layout-main')
 
 @section('content')
@@ -53,3 +69,5 @@ use DevOps213\SSOauthenticated\Models\SsoToken;
         @endforeach
     </ul>
 @endsection
+
+```
