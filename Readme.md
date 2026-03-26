@@ -4,7 +4,7 @@
 
 ```bash
 composer require 213devops/ssoauthenticated:dev-master
-``` 
+```
 
 ## Publishing Assets
 
@@ -14,6 +14,7 @@ php artisan vendor:publish --tag=ssoauth-views
 php artisan vendor:publish --tag=ssoauth-assets
 php artisan vendor:publish --tag=ssoauth-routes
 ```
+
 ## Routes Configuration
 
 ### Add this line to routes/web.php:
@@ -40,7 +41,7 @@ SSO_CLIENT_SECRET=your_client_secret
 route('sso.logout')
 ```
 
-##  Main Layout Example
+## Main Layout Example
 
 ```bash
 @extends('ssoauth-layout-main')

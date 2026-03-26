@@ -1,6 +1,6 @@
 class SsoClient {
     constructor(config = {}) {
-        this.ssoServerUrl = config.ssoServerUrl || 'http://sso.gedivepro.test';
+        this.ssoServerUrl = config.ssoServerUrl;
         this.clientId = config.clientId;
         this.redirectUri = config.redirectUri || window.location.origin + '/auth/sso/callback';
         this.scopes = config.scopes || ['read', 'write'];
@@ -239,13 +239,3 @@ class SsoClient {
 
     // ... rest of the methods (verifyToken, logout, etc.)
 }
-
-
-
-// Initialize
-window.SSO = new SsoClient({
-    ssoServerUrl: 'http://sso.gedivepro.test',
-    clientId: '14', // make it dynamique
-    redirectUri: window.location.origin + '/auth/sso/callback',
-    scopes: ['read', 'write']
-});
