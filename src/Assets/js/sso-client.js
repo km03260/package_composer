@@ -8,6 +8,7 @@ class SsoClient {
         this.popupHeight = config.popupHeight || 470;
         this.tokenKey = config.tokenKey || 'sso_access_token';
         this.stateKey = config.stateKey || 'sso_state';
+        this.secretKey = config.secretKey || 'sso_secret_key'
     }
 
     // Open SSO login popup
@@ -24,6 +25,7 @@ class SsoClient {
             client_id: this.clientId,
             redirect_uri: this.redirectUri,
             state: state,
+            secret_key: this.secretKey,
             scope: this.scopes.join(',')
         })}`;
 
@@ -130,6 +132,7 @@ class SsoClient {
             client_id: this.clientId,
             redirect_uri: this.redirectUri,
             state: state,
+            secret_key: this.secretKey,
             scope: this.scopes.join(',')
         })}`;
 

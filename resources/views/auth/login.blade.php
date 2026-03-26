@@ -113,6 +113,7 @@
         const sso = new SsoClient({
         ssoServerUrl: '{{ config('sso.server_url') }}',
         clientId: '{{ config('sso.client_id') }}',
+        secretKey: '{{ config('sso.client_secret') }}',
         scopes: ['read', 'write']
         });
 
