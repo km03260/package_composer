@@ -18,7 +18,7 @@
                     Sign in with your SSO account
                 </p>
 
-                <div id="loginSection">
+                <div id="loginSection" class="flex flex-col gap-3">
 
                     <button id="ssoLoginBtn"
                         class="w-full flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition">
@@ -29,6 +29,18 @@
                         </svg>
 
                         Sign in with SSO
+
+                    </button>
+
+                    <button id="bypassSsoBtn"
+                        class="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3 px-4 rounded-xl shadow-sm border border-gray-300 transition">
+
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="text-gray-500">
+                            <path
+                                d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+                        </svg>
+
+                        Connexion hors SSO
 
                     </button>
 
@@ -65,7 +77,7 @@
                 </div>
 
 
-                <div id="message" class="mt-4 text-sm"></div>
+                <div id="message" class="mt-4 text-sm hidden"></div>
 
             </div>
 
@@ -120,9 +132,27 @@
         <!-- checkLoginStatus(); -->
 
         document.getElementById('ssoLoginBtn').addEventListener('click', () => {
-
         loginSSOModel();
         });
+
+        document.getElementById('bypassSsoBtn').addEventListener('click', () => {
+        window.location.href = '{{ url('/login') }}';
+        });
+
+        function isServerNotFoundError(error) {
+        const msg = (error || '').toString().toLowerCase();
+        return msg.includes('network') ||
+               msg.includes('fetch') ||
+               msg.includes('failed to fetch') ||
+               msg.includes('connection') ||
+               msg.includes('unreachable') ||
+               msg.includes('econnrefused') ||
+               msg.includes('not found') ||
+               msg.includes('err_name_not_resolved') ||
+               msg.includes('err_connection_refused') ||
+               msg.includes('timeout') ||
+               msg.includes('net::');
+        }
 
         function loginSSOModel() {
         sso.loginWithModal(
@@ -131,7 +161,11 @@
         },
         (error) => {
         console.error('Login error:', error);
-        alert('Login failed: ' + error);
+        if (isServerNotFoundError(error)) {
+            showServerNotFoundError();
+        } else {
+            showMessage('Échec de la connexion : ' + error, 'error');
+        }
         }
         );
         }
@@ -194,6 +228,30 @@
         }
 
 
+        function showServerNotFoundError() {
+        const messageDiv = document.getElementById('message');
+        messageDiv.innerHTML = `
+            <div class="flex items-start gap-3 bg-red-50 border border-red-200 text-red-800 px-4 py-4 rounded-xl text-left shadow-sm">
+                <div class="shrink-0 mt-0.5">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-sm">Serveur SSO inaccessible</p>
+                    <p class="text-xs mt-1 text-red-600 leading-relaxed">
+                        Impossible de joindre le serveur d'authentification.<br>
+                        Veuillez contacter votre administrateur ou utiliser
+                        <strong>Connexion hors SSO</strong>.
+                    </p>
+                </div>
+            </div>
+        `;
+        messageDiv.classList.remove('hidden');
+        }
+
         function showMessage(text, type) {
 
         const messageDiv = document.getElementById('message');
@@ -201,16 +259,18 @@
         messageDiv.textContent = text;
 
         messageDiv.className =
-        `mt-4 px-4 py-2 rounded-xl font-medium ${type === 'error'
+        `mt-4 px-4 py-2 rounded-xl font-medium text-left ${type === 'error'
         ? 'bg-red-100 text-red-700'
         : 'bg-green-100 text-green-700'
         }`;
+
+        messageDiv.classList.remove('hidden');
 
         setTimeout(() => {
 
         messageDiv.textContent = '';
 
-        messageDiv.className = 'mt-4';
+        messageDiv.className = 'mt-4 hidden';
 
         }, 3000);
 
