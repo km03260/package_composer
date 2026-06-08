@@ -109,20 +109,49 @@
         </div>
 
         <div id="qrModal" class="hidden fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-            <div class="relative bg-white w-[90%] max-w-md rounded-2xl overflow-hidden shadow-xl p-6">
+            <div class="relative bg-white w-[90%] max-w-md rounded-2xl shadow-xl p-6">
 
                 <button id="closeQrModal"
-                    class="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-xl font-bold">
+                    class="absolute top-3 right-3 z-10 text-gray-400 hover:text-gray-900 text-2xl font-bold leading-none">
                     &times;
                 </button>
 
                 <h4 class="text-lg font-semibold text-gray-900 mb-4 text-center">
-                    Scanner votre QR code
+                    Connexion par QR code
                 </h4>
 
-                <div id="qr-reader" class="w-full"></div>
+                <div id="qr-reader" class="w-full rounded-xl overflow-hidden"></div>
 
-                <p id="qrScanStatus" class="text-sm text-gray-500 mt-3 text-center"></p>
+                <div id="qrFallback" class="hidden mt-4 space-y-3">
+
+                    <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-4 py-3 text-sm">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        Caméra indisponible — utilisez les options ci-dessous.
+                    </div>
+
+                    <label class="w-full flex items-center justify-center gap-2 cursor-pointer bg-indigo-50 hover:bg-indigo-100 border-2 border-dashed border-indigo-300 text-indigo-700 font-medium py-3 px-4 rounded-xl text-sm transition">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="8 12 12 8 16 12"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
+                        Scanner depuis une image
+                        <input id="qrFileInput" type="file" accept="image/*" class="hidden" />
+                    </label>
+
+                    <div class="flex items-center gap-2 text-gray-400 text-xs">
+                        <hr class="flex-1 border-gray-200" /><span>ou</span><hr class="flex-1 border-gray-200" />
+                    </div>
+
+                    <div class="flex gap-2">
+                        <input id="qrManualInput" type="text"
+                            placeholder="Code utilisateur SSO"
+                            class="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+                        <button id="qrManualSubmit"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
+                            OK
+                        </button>
+                    </div>
+
+                </div>
+
+                <p id="qrScanStatus" class="text-sm text-red-500 mt-3 text-center hidden"></p>
 
             </div>
         </div>
@@ -173,29 +202,28 @@
         });
 
         const qrModal = document.getElementById('qrModal');
-        const closeQrModalBtn = document.getElementById('closeQrModal');
+        const qrFallback = document.getElementById('qrFallback');
         const qrScanStatus = document.getElementById('qrScanStatus');
         let html5QrCode = null;
 
         document.getElementById('qrLoginBtn').addEventListener('click', () => {
-        qrModal.classList.remove('hidden');
-        startQrScanner();
+        openQrModal();
         });
 
-        closeQrModalBtn.addEventListener('click', () => {
-        stopQrScanner();
-        qrModal.classList.add('hidden');
+        document.getElementById('closeQrModal').addEventListener('click', () => {
+        closeQrModal();
         });
 
         qrModal.addEventListener('click', (e) => {
-        if (e.target === qrModal) {
-        stopQrScanner();
-        qrModal.classList.add('hidden');
-        }
+        if (e.target === qrModal) closeQrModal();
         });
 
-        function startQrScanner() {
+        function openQrModal() {
+        document.getElementById('qr-reader').innerHTML = '';
+        qrFallback.classList.add('hidden');
+        qrScanStatus.classList.add('hidden');
         qrScanStatus.textContent = '';
+        qrModal.classList.remove('hidden');
         html5QrCode = new Html5Qrcode('qr-reader');
         html5QrCode.start(
         { facingMode: 'environment' },
@@ -203,21 +231,61 @@
         (decodedText) => handleQrResult(decodedText),
         () => {}
         ).catch((err) => {
-        console.error('QR scanner start error:', err);
-        qrScanStatus.textContent = "Impossible d'accéder à la caméra.";
+        console.error('QR scanner error:', err);
+        qrFallback.classList.remove('hidden');
         });
         }
 
-        function stopQrScanner() {
-        if (html5QrCode) {
-        html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
+        function closeQrModal() {
+        qrModal.classList.add('hidden');
+        qrFallback.classList.add('hidden');
+        qrScanStatus.classList.add('hidden');
+        document.getElementById('qr-reader').innerHTML = '';
+        const instance = html5QrCode;
         html5QrCode = null;
+        if (instance) {
+        try {
+        instance.stop()
+        .then(() => { try { instance.clear(); } catch(e) {} })
+        .catch(() => { try { instance.clear(); } catch(e) {} });
+        } catch(e) {}
         }
         }
 
+        document.getElementById('qrFileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        let tempDiv = document.getElementById('qr-file-scan-tmp');
+        if (!tempDiv) {
+        tempDiv = document.createElement('div');
+        tempDiv.id = 'qr-file-scan-tmp';
+        tempDiv.style.display = 'none';
+        document.body.appendChild(tempDiv);
+        }
+        const scanner = new Html5Qrcode('qr-file-scan-tmp');
+        scanner.scanFile(file, false)
+        .then(decodedText => {
+        try { scanner.clear(); } catch(e) {}
+        handleQrResult(decodedText);
+        })
+        .catch(() => {
+        try { scanner.clear(); } catch(e) {}
+        qrScanStatus.textContent = "Aucun QR code trouvé dans cette image.";
+        qrScanStatus.classList.remove('hidden');
+        });
+        });
+
+        document.getElementById('qrManualSubmit').addEventListener('click', () => {
+        const val = document.getElementById('qrManualInput').value.trim();
+        if (val) handleQrResult(val);
+        });
+
+        document.getElementById('qrManualInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById('qrManualSubmit').click();
+        });
+
         function handleQrResult(decodedText) {
-        stopQrScanner();
-        qrModal.classList.add('hidden');
+        closeQrModal();
 
         let usersso = null;
         try {
