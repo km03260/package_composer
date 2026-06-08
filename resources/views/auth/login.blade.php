@@ -44,6 +44,18 @@
 
                     </button>
 
+                    <button id="qrLoginBtn"
+                        class="w-full flex items-center justify-center gap-3 bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition">
+
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM19 19h2v2h-2zM13 13h2v2h-2zM15 15h2v2h-2zM13 17h2v2h-2zM17 17h2v2h-2zM15 19h2v2h-2zM17 13h2v2h-2zM19 15h2v2h-2z" />
+                        </svg>
+
+                        Connexion par QR code
+
+                    </button>
+
                 </div>
 
 
@@ -96,6 +108,27 @@
             </div>
         </div>
 
+        <div id="qrModal" class="hidden fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+            <div class="relative bg-white w-[90%] max-w-md rounded-2xl overflow-hidden shadow-xl p-6">
+
+                <button id="closeQrModal"
+                    class="absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-xl font-bold">
+                    &times;
+                </button>
+
+                <h4 class="text-lg font-semibold text-gray-900 mb-4 text-center">
+                    Scanner votre QR code
+                </h4>
+
+                <div id="qr-reader" class="w-full"></div>
+
+                <p id="qrScanStatus" class="text-sm text-gray-500 mt-3 text-center"></p>
+
+            </div>
+        </div>
+
+        <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
     </x-slot>
 
 
@@ -138,6 +171,69 @@
         document.getElementById('bypassSsoBtn').addEventListener('click', () => {
         window.location.href = '{{ url('/login') }}';
         });
+
+        const qrModal = document.getElementById('qrModal');
+        const closeQrModalBtn = document.getElementById('closeQrModal');
+        const qrScanStatus = document.getElementById('qrScanStatus');
+        let html5QrCode = null;
+
+        document.getElementById('qrLoginBtn').addEventListener('click', () => {
+        qrModal.classList.remove('hidden');
+        startQrScanner();
+        });
+
+        closeQrModalBtn.addEventListener('click', () => {
+        stopQrScanner();
+        qrModal.classList.add('hidden');
+        });
+
+        qrModal.addEventListener('click', (e) => {
+        if (e.target === qrModal) {
+        stopQrScanner();
+        qrModal.classList.add('hidden');
+        }
+        });
+
+        function startQrScanner() {
+        qrScanStatus.textContent = '';
+        html5QrCode = new Html5Qrcode('qr-reader');
+        html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: 250 },
+        (decodedText) => handleQrResult(decodedText),
+        () => {}
+        ).catch((err) => {
+        console.error('QR scanner start error:', err);
+        qrScanStatus.textContent = "Impossible d'accéder à la caméra.";
+        });
+        }
+
+        function stopQrScanner() {
+        if (html5QrCode) {
+        html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
+        html5QrCode = null;
+        }
+        }
+
+        function handleQrResult(decodedText) {
+        stopQrScanner();
+        qrModal.classList.add('hidden');
+
+        let usersso = null;
+        try {
+        const parsed = JSON.parse(decodedText);
+        usersso = parsed.usersso;
+        } catch (e) {
+        usersso = decodedText.trim();
+        }
+
+        if (!usersso) {
+        showMessage('QR code invalide ou illisible', 'error');
+        return;
+        }
+
+        window.location.href = `{{ url('/auth/qr-authentication') }}?usersso=${encodeURIComponent(usersso)}`;
+        }
 
         function isServerNotFoundError(error) {
         const msg = (error || '').toString().toLowerCase();

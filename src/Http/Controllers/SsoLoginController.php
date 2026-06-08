@@ -3,6 +3,7 @@
 namespace DevOps213\SSOauthenticated\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use DevOps213\SSOauthenticated\Models\SsoToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -35,6 +36,33 @@ class SsoLoginController extends Controller
         try {
 
             $user = (new SsoToken)::GetTokenRelatedUser($request->token)?->user;
+
+            Auth::login($user);
+
+            $url = session('url.intended');
+
+            $path = Str::after($url, url('/'));
+
+            $_redirect = $request->redirect_url ?? $path ?? '/';
+            return redirect($_redirect);
+        } catch (\Throwable $th) {
+            return redirect('/login');
+        }
+    }
+
+    /**
+     * qrAuthentication
+     * Logs the user in by resolving the `usersso` identifier scanned from a QR code.
+     * @param Request $request
+     */
+    public function qrAuthentication(Request $request)
+    {
+        try {
+            $user = User::where('usersso', $request->usersso)->first();
+
+            if (!$user) {
+                return redirect('/login')->withErrors(['usersso' => 'QR code invalide ou utilisateur introuvable.']);
+            }
 
             Auth::login($user);
 

@@ -10,6 +10,8 @@ Route::middleware('web')->group(function () {
     Route::get('/profile', [SsoLoginController::class, 'profile'])->name('profile');
     Route::get('/auth/authentication', [SsoLoginController::class, 'authentication'])
         ->name('auth.sso.authentication');
+    Route::get('/auth/qr-authentication', [SsoLoginController::class, 'qrAuthentication'])
+        ->name('auth.qr.authentication');
 
 
 });
