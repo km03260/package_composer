@@ -156,6 +156,80 @@
             </div>
         </div>
 
+        <div id="localLoginModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div class="relative bg-white w-[90%] max-w-md rounded-2xl shadow-xl p-6">
+
+                <button id="closeLocalModal"
+                    class="absolute top-3 right-3 text-gray-400 hover:text-gray-900 text-2xl font-bold leading-none">
+                    &times;
+                </button>
+
+                <h4 class="text-lg font-semibold text-gray-900 mb-1 text-center">
+                    Connexion hors SSO
+                </h4>
+                <p class="text-sm text-gray-500 mb-4 text-center">
+                    Identifiez-vous avec vos identifiants Gedivepro
+                </p>
+
+                <div id="localError"
+                    class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700"></div>
+
+                <div id="localSuccess"
+                    class="hidden mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700">
+                    Connexion réussie ! Redirection...
+                </div>
+
+                <form id="localLoginForm" class="space-y-4 text-left">
+                    @csrf
+
+                    <div id="localVerifyBox" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <p class="text-sm text-blue-800 mb-3">
+                            Avant de continuer, merci de vérifier votre e-mail contenant un
+                            <span class="font-semibold">code de vérification</span>.
+                        </p>
+                        <input type="text" name="code" placeholder="Code de vérification"
+                            class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div id="localLocatedBox"
+                        class="hidden p-4 rounded-xl border border-red-200 bg-red-50 text-sm text-red-700 text-left">
+                        <strong class="block mb-1">Accès bloqué en dehors des locaux de Gedivepro</strong>
+                        Votre profil ne vous permet pas d'accéder aux applications en dehors des locaux de Gedivepro.
+                    </div>
+
+                    <div id="localLoginFields" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email ou identifiant</label>
+                            <input type="text" name="login" id="localLogin" required autocomplete="username"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                placeholder="Email ou nom d'utilisateur">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+                            <input type="password" name="password" id="localPassword" required
+                                autocomplete="current-password"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                                placeholder="••••••••">
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" name="remember" id="localRemember"
+                                class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                            <label for="localRemember" class="ml-2 text-sm text-gray-700">
+                                Se souvenir de cet appareil
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="localSubmitBtn"
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl shadow-md transition">
+                        <span id="localBtnText">Se connecter</span>
+                        <span id="localLoader" class="hidden">Connexion...</span>
+                    </button>
+                </form>
+
+            </div>
+        </div>
+
         <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
     </x-slot>
@@ -198,7 +272,7 @@
         });
 
         document.getElementById('bypassSsoBtn').addEventListener('click', () => {
-        window.location.href = '{{ url('/login') }}';
+        openLocalModal();
         });
 
         const qrModal = document.getElementById('qrModal');
@@ -444,6 +518,103 @@
         window.addEventListener('load', () => {
         document.getElementById('ssoLoginBtn').click();
 
+        });
+
+
+        // --- Connexion hors SSO (local login) ---
+        const localModal = document.getElementById('localLoginModal');
+
+        document.getElementById('closeLocalModal').addEventListener('click', () => {
+        localModal.classList.add('hidden');
+        });
+
+        localModal.addEventListener('click', (e) => {
+        if (e.target === localModal) localModal.classList.add('hidden');
+        });
+
+        function openLocalModal() {
+        resetLocalModal();
+        localModal.classList.remove('hidden');
+        setTimeout(() => document.getElementById('localLogin').focus(), 100);
+        }
+
+        function resetLocalModal() {
+        document.getElementById('localError').classList.add('hidden');
+        document.getElementById('localSuccess').classList.add('hidden');
+        document.getElementById('localVerifyBox').classList.add('hidden');
+        document.getElementById('localLocatedBox').classList.add('hidden');
+        document.getElementById('localLoginFields').classList.remove('hidden');
+        }
+
+        document.getElementById('localLoginForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const form = this;
+        const errorDiv = document.getElementById('localError');
+        const successDiv = document.getElementById('localSuccess');
+        const btnText = document.getElementById('localBtnText');
+        const loader = document.getElementById('localLoader');
+        const submitBtn = document.getElementById('localSubmitBtn');
+
+        errorDiv.classList.add('hidden');
+        successDiv.classList.add('hidden');
+        btnText.classList.add('hidden');
+        loader.classList.remove('hidden');
+        submitBtn.disabled = true;
+
+        try {
+        const response = await fetch('{{ route('auth.local.login') }}', {
+        method: 'POST',
+        headers: {
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': form.querySelector('input[name="_token"]').value,
+        'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: new FormData(form)
+        });
+
+        const data = await response.json();
+
+        btnText.classList.remove('hidden');
+        loader.classList.add('hidden');
+        submitBtn.disabled = false;
+
+        if (data.success) {
+        successDiv.classList.remove('hidden');
+        setTimeout(() => {
+        window.location.href = data.redirect_url || '/';
+        }, 1200);
+        return;
+        }
+
+        const verifyBox = document.getElementById('localVerifyBox');
+        const locatedBox = document.getElementById('localLocatedBox');
+        const loginFields = document.getElementById('localLoginFields');
+
+        if (data.located) {
+        locatedBox.classList.remove('hidden');
+        verifyBox.classList.add('hidden');
+        loginFields.classList.add('hidden');
+        } else if (data.verify) {
+        // Keep login/password in the form (hidden) so they are resubmitted with the code.
+        verifyBox.classList.remove('hidden');
+        locatedBox.classList.add('hidden');
+        loginFields.classList.add('hidden');
+        errorDiv.textContent = data.message || '';
+        errorDiv.classList.toggle('hidden', !data.message);
+        document.querySelector('#localVerifyBox input[name="code"]').focus();
+        } else {
+        errorDiv.textContent = data.message || 'Échec de la connexion. Veuillez réessayer.';
+        errorDiv.classList.remove('hidden');
+        }
+        } catch (err) {
+        console.error('Local login error:', err);
+        btnText.classList.remove('hidden');
+        loader.classList.add('hidden');
+        submitBtn.disabled = false;
+        errorDiv.textContent = 'Erreur réseau. Vérifiez votre connexion.';
+        errorDiv.classList.remove('hidden');
+        }
         });
 
 
