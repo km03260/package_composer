@@ -3,7 +3,7 @@
 namespace DevOps213\SSOauthenticated\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use DevOps213\SSOauthenticated\Http\Controllers\Concerns\InteractsWithDeviceSecurity;
 use DevOps213\SSOauthenticated\Models\SsoToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,6 +12,18 @@ use Illuminate\Support\Facades\Session;
 
 class SsoLoginController extends Controller
 {
+    use InteractsWithDeviceSecurity;
+
+    /**
+     * Resolve the application's configured authenticatable model.
+     *
+     * @return class-string
+     */
+    protected function userModel(): string
+    {
+        return config('auth.providers.users.model', \App\Models\User::class);
+    }
+
     public function login()
     {
         return view('ssoauth::auth.login');
@@ -58,10 +70,35 @@ class SsoLoginController extends Controller
     public function qrAuthentication(Request $request)
     {
         try {
-            $user = User::where('usersso', $request->usersso)->first();
+            $model = $this->userModel();
+            $user = $model::where('usersso', $request->usersso)->first();
 
             if (!$user) {
                 return redirect('/login')->withErrors(['usersso' => 'QR code invalide ou utilisateur introuvable.']);
+            }
+
+            // --- dfa: device matching + e-mail verification code ---
+            if (($user->dfa ?? 0) == 1) {
+                if ($request->code && !$this->verifyDeviceCode($request->code)) {
+                    return view('ssoauth::auth.qr-verify', [
+                        'usersso' => $request->usersso,
+                        'error' => __('Le code est invalide.'),
+                    ]);
+                }
+
+                if ($this->checkDFA($request, $user) !== 'confirmed') {
+                    return view('ssoauth::auth.qr-verify', [
+                        'usersso' => $request->usersso,
+                        'error' => null,
+                    ]);
+                }
+            }
+
+            // --- baof: block access outside the Gedivepro premises ---
+            if (($user->baof ?? 0) == 1 && $this->checkApiFactoryLocated($request, $user) !== 'located') {
+                return redirect('/login')->withErrors([
+                    'usersso' => __('Accès bloqué en dehors des locaux de Gedivepro'),
+                ]);
             }
 
             Auth::login($user);
@@ -75,6 +112,39 @@ class SsoLoginController extends Controller
         } catch (\Throwable $th) {
             return redirect('/login');
         }
+    }
+
+    /**
+     * Resend the QR-login dfa verification code for the current device.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function qrResendCode(Request $request)
+    {
+        $request->validate(['usersso' => 'required|string']);
+
+        $model = $this->userModel();
+        $user = $model::where('usersso', $request->usersso)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Utilisateur introuvable.'),
+            ], 404);
+        }
+
+        if (!$this->issueVerificationCode($request, $user)) {
+            return response()->json([
+                'success' => false,
+                'message' => __("Impossible d'envoyer le code. Réessayez plus tard."),
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Un nouveau code de vérification a été envoyé.'),
+        ]);
     }
 
     /**

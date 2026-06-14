@@ -3,18 +3,14 @@
 
 <div id="ssoModal" class="hidden fixed inset-0 bg-black/30 flex items-center justify-center rounded-none">
     <div
-        class="relative bg-white w-[800px] h-[540px] rounded-none overflow-hidden shadow-[10px_8px_15px_6px_#ccc] flex flex-col">
+        class="relative bg-white w-[800px] h-[500px] rounded-none overflow-hidden shadow-[10px_8px_15px_6px_#ccc]">
 
         <button id="closeModal"
             class="absolute top-3 right-3 z-10 text-gray-600 hover:text-gray-900 text-xl font-bold">
             &times;
         </button>
 
-        <div class="flex justify-center items-center py-2 border-b border-gray-100 bg-white">
-            <img src="{{ $ssoLogo }}" alt="Gedivepro" class="h-8" onerror="this.style.display='none'">
-        </div>
-
-        <iframe id="ssoIframe" src="" class="w-full flex-1 border-0"></iframe>
+        <iframe id="ssoIframe" src="" class="w-full h-full border-0"></iframe>
     </div>
 </div>
 

@@ -19,6 +19,11 @@ Route::middleware('web')->group(function () {
         ->name('auth.sso.authentication');
     Route::get('/auth/qr-authentication', [SsoLoginController::class, 'qrAuthentication'])
         ->name('auth.qr.authentication');
+    // QR login dfa verification (code submission) + resend.
+    Route::post('/auth/qr-authentication', [SsoLoginController::class, 'qrAuthentication'])
+        ->name('auth.qr.authentication.verify');
+    Route::post('/auth/qr/resend', [SsoLoginController::class, 'qrResendCode'])
+        ->name('auth.qr.resend');
 
 
 });

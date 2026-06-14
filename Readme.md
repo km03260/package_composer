@@ -59,8 +59,17 @@ The form posts to `route('auth.local.login')` and the user model is resolved fro
 
 A **Renvoyer le code** button re-requests a fresh verification code via
 `route('auth.local.resend')`. The Gedivepro logo (see `SSO_LOGO_URL`) is shown at the
-top of every login modal. The login modal is available on both the `auth.login` and
-`auth.prelogin` views.
+top of the QR and local-login modals. The login modal is available on both the
+`auth.login` and `auth.prelogin` views.
+
+The **QR-code login** (`auth.qr.authentication`) enforces the same matching / dfa /
+baof checks. When dfa is required it redirects to a verification page
+(`ssoauth::auth.qr-verify`) where the user enters the e-mailed code (with a resend
+button), then completes the login.
+
+> Internal links use named routes (`route('auth.qr.authentication')`, etc.) because the
+> package routes are served under the `sso` prefix. After upgrading the package,
+> re-publish the routes: `php artisan vendor:publish --tag=ssoauth-routes --force`.
 
 > **No e-mail received?** The verification mail uses the application's default
 > `MAIL_FROM_ADDRESS`. Make sure the mailer is configured; send failures are written to

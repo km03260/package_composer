@@ -134,7 +134,7 @@ showMessage('QR code invalide ou illisible', 'error');
 return;
 }
 
-window.location.href = `{{ url('/auth/qr-authentication') }}?usersso=${encodeURIComponent(usersso)}`;
+window.location.href = `{{ route('auth.qr.authentication') }}?usersso=${encodeURIComponent(usersso)}`;
 }
 
 function isServerNotFoundError(error) {
@@ -169,7 +169,7 @@ if (isServerNotFoundError(error)) {
 }
 
 function updateUserUI(data) {
-window.location.href = `/auth/authentication?token=${data.token}`;
+window.location.href = `{{ route('auth.sso.authentication') }}?token=${data.token}`;
 
 const loginBtn = document.getElementById('ssoLoginBtn');
 loginBtn.textContent = `Welcome, ${data.user.Prenom || data.user.Email}`;
