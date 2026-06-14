@@ -2,19 +2,21 @@ const modal = document.getElementById('ssoModal');
 const closeBtn = document.getElementById('closeModal');
 const iframe = document.getElementById('ssoIframe');
 
+// The SSO modal is shown by sso-client.js with an inline `display:flex`, which
+// overrides the Tailwind `hidden` class — so it must be hidden via inline style.
 closeBtn.addEventListener('click', () => {
-modal.classList.add('hidden');
+modal.style.display = 'none';
 });
 
 // Optional: click outside modal to close
 modal.addEventListener('click', (e) => {
 if (e.target === modal) {
-modal.classList.add('hidden');
+modal.style.display = 'none';
 }
 });
 function openSsoModal() {
 iframe.src = `${sso.ssoServerUrl}/sso/login/popup?...`;
-modal.classList.remove('hidden');
+modal.style.display = 'flex';
 }
 
 
