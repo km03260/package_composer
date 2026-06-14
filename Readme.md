@@ -35,6 +35,10 @@ SSO_CLIENT_SECRET=your_client_secret
 # Optional — required only for the "baof" check of the local login (see below).
 # Requests whose IP differs from this value are blocked outside the premises.
 IP_FACTORY_LOCATED=
+
+# Optional — public path of the Gedivepro logo shown at the top of the modals.
+# Defaults to images/Gedivepro_logo.png
+SSO_LOGO_URL=images/Gedivepro_logo.png
 ```
 
 ## Local Login ("Connexion hors SSO")
@@ -52,6 +56,15 @@ bypassing the SSO server. It mirrors the SSO server's checks, in order:
 
 The form posts to `route('auth.local.login')` and the user model is resolved from
 `config('auth.providers.users.model')`, so no host code changes are required.
+
+A **Renvoyer le code** button re-requests a fresh verification code via
+`route('auth.local.resend')`. The Gedivepro logo (see `SSO_LOGO_URL`) is shown at the
+top of every login modal. The login modal is available on both the `auth.login` and
+`auth.prelogin` views.
+
+> **No e-mail received?** The verification mail uses the application's default
+> `MAIL_FROM_ADDRESS`. Make sure the mailer is configured; send failures are written to
+> `storage/logs` (`Local login dfa: failed to send verification code`).
 
 ### Requirements
 

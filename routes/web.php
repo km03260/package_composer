@@ -10,6 +10,8 @@ Route::middleware('web')->group(function () {
     // Local ("Connexion hors SSO") login — password + dfa + baof checks.
     Route::post('/auth/local/login', [LocalLoginController::class, 'handleLogin'])
         ->name('auth.local.login');
+    Route::post('/auth/local/resend', [LocalLoginController::class, 'resendCode'])
+        ->name('auth.local.resend');
     Route::post('/sso/logout', [SsoLoginController::class, 'logout'])->name('sso.logout');
     Route::get('/auth/sso/callback', [SsoLoginController::class, 'callback'])->name('sso.callback');
     Route::get('/profile', [SsoLoginController::class, 'profile'])->name('profile');

@@ -9,6 +9,7 @@ use DevOps213\SSOauthenticated\Models\MatchingUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Jenssegers\Agent\Agent;
@@ -124,6 +125,81 @@ class LocalLoginController extends Controller
     }
 
     /**
+     * Resend the dfa verification code for the current device.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function resendCode(Request $request)
+    {
+        $request->validate([
+            'login' => 'required|string',
+            'password' => 'required',
+        ]);
+
+        $field = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'Email' : 'Login';
+
+        $model = $this->userModel();
+        $user = $model::where($field, $request->login)->first();
+
+        if (!$user || !Hash::check($request->password, $user->Mdp)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('The provided credentials are incorrect.'),
+            ], 401);
+        }
+
+        $_matches = $this->agentMatching($request, $user->id);
+        unset($_matches['ip_request']);
+
+        // Refresh (or create) the pending match with a new code.
+        $match = MatchingUser::updateOrCreate($_matches, array_merge(
+            $this->agentMatching($request, $user->id),
+            ['match_token' => Str::random(10)]
+        ));
+
+        if (!$this->sendVerificationCode($user, $match)) {
+            return response()->json([
+                'success' => false,
+                'verify' => true,
+                'message' => __("Impossible d'envoyer le code. Réessayez plus tard."),
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'verify' => true,
+            'message' => __('Un nouveau code de vérification a été envoyé.'),
+        ]);
+    }
+
+    /**
+     * E-mail the device verification code, logging any failure.
+     *
+     * @param mixed $user
+     * @param MatchingUser $match
+     * @return bool
+     */
+    private function sendVerificationCode($user, MatchingUser $match): bool
+    {
+        if (empty($user->Email)) {
+            Log::warning('Local login dfa: user has no e-mail address.', ['user_id' => $user->id]);
+            return false;
+        }
+
+        try {
+            Mail::to($user->Email)->send(new DeviceVerificationMail($match));
+            return true;
+        } catch (\Throwable $th) {
+            Log::error('Local login dfa: failed to send verification code.', [
+                'user_id' => $user->id,
+                'error' => $th->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    /**
      * Check double authentication: confirm the current device is trusted,
      * otherwise create a pending match and e-mail a verification code.
      *
@@ -143,17 +219,12 @@ class LocalLoginController extends Controller
                 ->exists();
 
             if (!$confirmed) {
-                try {
-                    MatchingUser::updateOrCreate($_matches, array_merge(
-                        $this->agentMatching($request, $user->id),
-                        ['match_token' => Str::random(10)]
-                    ));
+                $_match = MatchingUser::updateOrCreate($_matches, array_merge(
+                    $this->agentMatching($request, $user->id),
+                    ['match_token' => Str::random(10)]
+                ));
 
-                    $_match = MatchingUser::where($_matches)->first();
-
-                    Mail::to($user->Email)->send(new DeviceVerificationMail($_match));
-                } catch (\Throwable $th) {
-                }
+                $this->sendVerificationCode($user, $_match);
 
                 return 'verify';
             }

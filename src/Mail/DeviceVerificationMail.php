@@ -23,9 +23,10 @@ class DeviceVerificationMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        // Let Laravel use the application's configured MAIL_FROM_ADDRESS so the
+        // message is not rejected by SMTP for an unverified sender.
         return new Envelope(
             subject: 'Gedivepro - Connexion sur un nouvel appareil',
-            from: 'noreply@gedivepro.com'
         );
     }
 
