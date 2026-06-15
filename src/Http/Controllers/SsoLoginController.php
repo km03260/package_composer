@@ -7,6 +7,7 @@ use DevOps213\SSOauthenticated\Http\Controllers\Concerns\InteractsWithDeviceSecu
 use DevOps213\SSOauthenticated\Models\SsoToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Session;
 
@@ -110,6 +111,10 @@ class SsoLoginController extends Controller
             $_redirect = $request->redirect_url ?? $path ?? '/';
             return redirect($_redirect);
         } catch (\Throwable $th) {
+            Log::error('QR authentication failed.', [
+                'usersso' => $request->usersso,
+                'error' => $th->getMessage(),
+            ]);
             return redirect('/login');
         }
     }

@@ -77,14 +77,20 @@ button), then completes the login.
 
 ### Requirements
 
-The `dfa` / `baof` checks **degrade gracefully**: when the supporting columns/table
-are absent they are skipped and the login is password-only. To enable them, the host
-application must provide:
+The `user_matching` table (used to record/trust devices) ships as a package migration
+and is loaded automatically — run it after install:
 
-- a `user_matching` table (columns: `user_id`, `user_agent`, `platform`, `device`,
-  `version`, `matching_regex`, `ip_request`, `match_token`, `confirmed_at`, `created_at`);
-- `dfa` and `baof` (tinyint/boolean) columns on the user table;
-- `IP_FACTORY_LOCATED` in `.env` (for `baof`);
+```bash
+php artisan migrate
+```
+
+The `dfa` / `baof` checks **degrade gracefully**: when the supporting columns are absent
+they are skipped and the login is password-only. To enable them, the host application
+must also provide:
+
+- `dfa` and `baof` (tinyint/boolean) columns on the user table (no row written to
+  `user_matching` unless `dfa = 1` — device matching is part of the dfa check);
+- `IP_FACTORY_LOCATED` in `.env` (for `baof`; when unset, `baof` never blocks);
 - a configured mailer (for the `dfa` verification e-mail).
 
 > The `jenssegers/agent` dependency (used by device matching) is pulled in

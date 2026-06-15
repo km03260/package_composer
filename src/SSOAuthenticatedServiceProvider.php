@@ -33,6 +33,12 @@ class SSOAuthenticatedServiceProvider extends ServiceProvider
             __DIR__ . '/../config/sso.php' => config_path('sso.php'),
         ], 'ssoauth-config');
 
+        // 4️⃣b Load + publish migrations (creates the user_matching table)
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->publishes([
+            __DIR__ . '/../database/migrations' => database_path('migrations'),
+        ], 'ssoauth-migrations');
+
         // 5️⃣ Publish routes
         $this->publishes([
             __DIR__ . '/../routes/web.php' => base_path('routes/ssoauthenticated.php'),
