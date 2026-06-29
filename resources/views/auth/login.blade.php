@@ -101,7 +101,7 @@
 
 
     <x-slot name="extraJs">
-        @include('ssoauth::auth.partials.login-scripts')
+        @include('ssoauth::auth.partials.login-scripts', ['autoLoginSso' => true])
     </x-slot>
 
 </x-ssoauth-layout-main>

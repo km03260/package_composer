@@ -390,3 +390,10 @@ btn.disabled = false;
 btn.textContent = original;
 }
 });
+
+@if (($autoLoginSso ?? false))
+// Auto-open the SSO authentication modal (login page only — not after logout/prelogin).
+window.addEventListener('load', () => {
+document.getElementById('ssoLoginBtn').click();
+});
+@endif
