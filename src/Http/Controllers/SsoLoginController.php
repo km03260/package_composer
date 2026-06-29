@@ -125,10 +125,11 @@ class SsoLoginController extends Controller
             Auth::login($user);
 
             $url = session('url.intended');
+            $path = $url ? Str::after($url, url('/')) : null;
 
-            $path = Str::after($url, url('/'));
-
-            $_redirect = $request->redirect_url ?? $path ?? '/';
+            // Fall back to home when no explicit/intended URL is available so the
+            // client never receives an empty redirect (which would look like a failure).
+            $_redirect = $request->redirect_url ?: ($path ?: '/');
 
             if ($ajax) {
                 return response()->json(['success' => true, 'redirect' => $_redirect]);

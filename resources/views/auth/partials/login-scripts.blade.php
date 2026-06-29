@@ -177,9 +177,9 @@ headers: {
 let data = {};
 try { data = await res.json(); } catch (e) {}
 
-// Success, or dfa verification page: navigate.
-if (data.redirect) {
-window.location.href = data.redirect;
+// Success (2FA off) or dfa verification handoff: navigate.
+if (data.success || data.verify) {
+window.location.href = data.redirect || '{{ url('/') }}';
 return;
 }
 
