@@ -390,8 +390,3 @@ btn.disabled = false;
 btn.textContent = original;
 }
 });
-
-
-window.addEventListener('load', () => {
-document.getElementById('ssoLoginBtn').click();
-});
