@@ -70,11 +70,7 @@ qrFallback.classList.remove('hidden');
 });
 }
 
-function closeQrModal() {
-qrModal.classList.add('hidden');
-qrFallback.classList.add('hidden');
-qrScanStatus.classList.add('hidden');
-document.getElementById('qr-reader').innerHTML = '';
+function stopQrCamera() {
 const instance = html5QrCode;
 html5QrCode = null;
 if (instance) {
@@ -84,6 +80,25 @@ instance.stop()
 .catch(() => { try { instance.clear(); } catch(e) {} });
 } catch(e) {}
 }
+}
+
+function closeQrModal() {
+qrModal.classList.add('hidden');
+qrFallback.classList.add('hidden');
+qrScanStatus.classList.add('hidden');
+document.getElementById('qr-reader').innerHTML = '';
+stopQrCamera();
+}
+
+let qrSubmitting = false;
+
+// Show an error inside the QR modal (keeps it open) and reveal the
+// fallback options (image upload / manual code) so the user can retry.
+function showQrError(message) {
+qrSubmitting = false;
+qrScanStatus.textContent = message;
+qrScanStatus.classList.remove('hidden');
+qrFallback.classList.remove('hidden');
 }
 
 function scanQrFile(file) {
@@ -129,8 +144,8 @@ document.getElementById('qrManualInput').addEventListener('keydown', (e) => {
 if (e.key === 'Enter') document.getElementById('qrManualSubmit').click();
 });
 
-function handleQrResult(decodedText) {
-closeQrModal();
+async function handleQrResult(decodedText) {
+if (qrSubmitting) return;
 
 let usersso = null;
 try {
@@ -141,11 +156,38 @@ usersso = decodedText.trim();
 }
 
 if (!usersso) {
-showMessage('QR code invalide ou illisible', 'error');
+showQrError('QR code invalide ou illisible.');
 return;
 }
 
-window.location.href = `{{ route('auth.qr.authentication') }}?usersso=${encodeURIComponent(usersso)}`;
+// Stop the camera so the continuous scanner doesn't fire repeatedly while
+// we authenticate, but keep the modal open in case we need to show an error.
+qrSubmitting = true;
+stopQrCamera();
+qrScanStatus.classList.add('hidden');
+
+try {
+const res = await fetch(`{{ route('auth.qr.authentication') }}?usersso=${encodeURIComponent(usersso)}`, {
+headers: {
+'Accept': 'application/json',
+'X-Requested-With': 'XMLHttpRequest'
+}
+});
+
+let data = {};
+try { data = await res.json(); } catch (e) {}
+
+// Success, or dfa verification page: navigate.
+if (data.redirect) {
+window.location.href = data.redirect;
+return;
+}
+
+showQrError(data.message || 'QR code invalide ou utilisateur introuvable.');
+} catch (err) {
+console.error('QR authentication error:', err);
+showQrError('Erreur réseau. Vérifiez votre connexion.');
+}
 }
 
 function isServerNotFoundError(error) {

@@ -70,16 +70,34 @@ class SsoLoginController extends Controller
      */
     public function qrAuthentication(Request $request)
     {
+        // The QR scan/upload submits this endpoint via AJAX so errors can be shown
+        // in the QR modal instead of navigating the user to the login page.
+        $ajax = $request->ajax() || $request->expectsJson();
+
         try {
             $model = $this->userModel();
             $user = $model::where('usersso', $request->usersso)->first();
 
             if (!$user) {
-                return redirect('/login')->withErrors(['usersso' => 'QR code invalide ou utilisateur introuvable.']);
+                $message = __('QR code invalide ou utilisateur introuvable.');
+                if ($ajax) {
+                    return response()->json(['success' => false, 'message' => $message], 422);
+                }
+                return redirect('/login')->withErrors(['usersso' => $message]);
             }
 
             // --- dfa: device matching + e-mail verification code ---
             if (($user->dfa ?? 0) == 1) {
+                // Initial AJAX scan with no code yet: hand off to the full verify
+                // page so the verification code is issued there (only once).
+                if ($ajax && !$request->code) {
+                    return response()->json([
+                        'success' => false,
+                        'verify' => true,
+                        'redirect' => route('auth.qr.authentication', ['usersso' => $request->usersso]),
+                    ]);
+                }
+
                 if ($request->code && !$this->verifyDeviceCode($request->code)) {
                     return view('ssoauth::auth.qr-verify', [
                         'usersso' => $request->usersso,
@@ -97,9 +115,11 @@ class SsoLoginController extends Controller
 
             // --- baof: block access outside the Gedivepro premises ---
             if (($user->baof ?? 0) == 1 && $this->checkApiFactoryLocated($request, $user) !== 'located') {
-                return redirect('/login')->withErrors([
-                    'usersso' => __('Accès bloqué en dehors des locaux de Gedivepro'),
-                ]);
+                $message = __('Accès bloqué en dehors des locaux de Gedivepro');
+                if ($ajax) {
+                    return response()->json(['success' => false, 'message' => $message], 403);
+                }
+                return redirect('/login')->withErrors(['usersso' => $message]);
             }
 
             Auth::login($user);
@@ -109,12 +129,23 @@ class SsoLoginController extends Controller
             $path = Str::after($url, url('/'));
 
             $_redirect = $request->redirect_url ?? $path ?? '/';
+
+            if ($ajax) {
+                return response()->json(['success' => true, 'redirect' => $_redirect]);
+            }
             return redirect($_redirect);
         } catch (\Throwable $th) {
             Log::error('QR authentication failed.', [
                 'usersso' => $request->usersso,
                 'error' => $th->getMessage(),
             ]);
+
+            if ($ajax) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Échec de la connexion par QR code. Veuillez réessayer.'),
+                ], 500);
+            }
             return redirect('/login');
         }
     }
