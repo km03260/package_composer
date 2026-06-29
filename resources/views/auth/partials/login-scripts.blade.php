@@ -86,9 +86,10 @@ instance.stop()
 }
 }
 
-document.getElementById('qrFileInput').addEventListener('change', (e) => {
-const file = e.target.files[0];
+function scanQrFile(file) {
 if (!file) return;
+qrScanStatus.classList.add('hidden');
+qrScanStatus.textContent = '';
 let tempDiv = document.getElementById('qr-file-scan-tmp');
 if (!tempDiv) {
 tempDiv = document.createElement('div');
@@ -107,6 +108,16 @@ try { scanner.clear(); } catch(e) {}
 qrScanStatus.textContent = "Aucun QR code trouvé dans cette image.";
 qrScanStatus.classList.remove('hidden');
 });
+}
+
+document.getElementById('qrFileInputMain').addEventListener('change', (e) => {
+scanQrFile(e.target.files[0]);
+e.target.value = '';
+});
+
+document.getElementById('qrFileInput').addEventListener('change', (e) => {
+scanQrFile(e.target.files[0]);
+e.target.value = '';
 });
 
 document.getElementById('qrManualSubmit').addEventListener('click', () => {

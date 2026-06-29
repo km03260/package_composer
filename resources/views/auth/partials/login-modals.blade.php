@@ -32,6 +32,16 @@
 
         <div id="qr-reader" class="w-full rounded-xl overflow-hidden"></div>
 
+        <p class="text-xs text-gray-400 text-center mt-3">
+            Placez le QR code devant la caméra ou importez une image.
+        </p>
+
+        <label class="mt-3 w-full flex items-center justify-center gap-2 cursor-pointer bg-indigo-50 hover:bg-indigo-100 border-2 border-dashed border-indigo-300 text-indigo-700 font-medium py-3 px-4 rounded-xl text-sm transition">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="8 12 12 8 16 12"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
+            Importer une image QR code
+            <input id="qrFileInputMain" type="file" accept="image/*" class="hidden" />
+        </label>
+
         <div id="qrFallback" class="hidden mt-4 space-y-3">
 
             <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-4 py-3 text-sm">
