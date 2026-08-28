@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use DevOps213\SSOauthenticated\Console\InstallSSOAuthenticated;
 use DevOps213\SSOauthenticated\Http\Middleware\SsoAuth;
+use DevOps213\SSOauthenticated\Http\Middleware\ResolveSessionDomain;
 
 class SSOAuthenticatedServiceProvider extends ServiceProvider
 {
@@ -49,6 +50,14 @@ class SSOAuthenticatedServiceProvider extends ServiceProvider
 
         // 7️⃣ Register middleware alias
         $this->app['router']->aliasMiddleware('sso.auth', SsoAuth::class);
+
+        // 7️⃣b SESSION_DOMAIN may list several patterns separated by commas.
+        // Pushed on the global stack: after TrustProxies, so the host is the
+        // real one, and before the web group starts the session.
+        if (!$this->app->runningInConsole()) {
+            $this->app->make(\Illuminate\Contracts\Http\Kernel::class)
+                ->pushMiddleware(ResolveSessionDomain::class);
+        }
 
         // 8️⃣ Register Blade component
         Blade::component('ssoauth-layout-main', \DevOps213\SSOauthenticated\View\Components\Layout\Main::class);

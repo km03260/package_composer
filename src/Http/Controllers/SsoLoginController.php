@@ -48,7 +48,11 @@ class SsoLoginController extends Controller
     {
         try {
 
-            $user = (new SsoToken)::GetTokenRelatedUser($request->token)?->user;
+            // La popup et l'iframe renvoient `token` ; la redirection
+            // top-level renvoie `access_token`, nomme ainsi par le SSO.
+            $token = $request->input('token') ?: $request->input('access_token');
+
+            $user = (new SsoToken)::GetTokenRelatedUser($token)?->user;
 
             Auth::login($user);
 

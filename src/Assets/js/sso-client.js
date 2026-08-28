@@ -9,6 +9,106 @@ class SsoClient {
         this.tokenKey = config.tokenKey || 'sso_access_token';
         this.stateKey = config.stateKey || 'sso_state';
         this.secretKey = config.secretKey || 'sso_secret_key'
+        this.redirectGuardKey = config.redirectGuardKey || 'sso_redirect_attempt'
+    }
+
+    /**
+     * Navigation top-level vers le SSO.
+     *
+     * Contrairement a l'iframe et a la popup, la page entiere se rend sur le
+     * domaine du SSO : ses cookies y sont first-party, donc poses et renvoyes.
+     * C'est la seule forme qui partage reellement la session entre des
+     * domaines distincts, et la seule qui n'exige aucun geste utilisateur.
+     */
+    loginWithRedirect(automatic = false) {
+        // Garde-fou : si le SSO renvoie ici juste apres un retour infructueux
+        // (jeton refuse, par exemple), une redirection automatique repartirait
+        // en boucle. Une tentative automatique ne se rejoue donc pas dans les
+        // 10 secondes ; un clic de l'utilisateur, lui, passe toujours.
+        const lastAttempt = Number(sessionStorage.getItem(this.redirectGuardKey) || 0);
+
+        if (automatic && Date.now() - lastAttempt < 10000) {
+            return false;
+        }
+
+        sessionStorage.setItem(this.redirectGuardKey, String(Date.now()));
+
+        const state = this.generateState();
+        localStorage.setItem(this.stateKey, state);
+
+        window.location.href = `${this.ssoServerUrl}/sso/login/popup?${new URLSearchParams({
+            client_id: this.clientId,
+            redirect_uri: this.redirectUri,
+            state: state,
+            secret_key: this.secretKey,
+            scope: this.scopes.join(',')
+        })}`;
+
+        return true;
+    }
+
+    /**
+     * Maintient la fenetre de connexion au premier plan, autant que le
+     * navigateur l'autorise.
+     *
+     * Aucune API web ne permet d'epingler une fenetre au-dessus des autres ni
+     * d'empecher un changement d'onglet : cela releve du systeme, pas de la
+     * page. Ce qui est realisable est applique ici :
+     *   - la page du module est recouverte d'un voile qui bloque toute
+     *     interaction tant que la connexion n'est pas terminee ;
+     *   - des que la fenetre parente reprend le focus, la popup est ramenee
+     *     devant.
+     */
+    _holdPopupInFront(popup) {
+        const overlay = document.createElement('div');
+        overlay.setAttribute('data-sso-overlay', '');
+        overlay.style.cssText = [
+            'position:fixed', 'inset:0', 'z-index:2147483647',
+            'background:rgba(15,23,42,.72)',
+            'display:flex', 'align-items:center', 'justify-content:center',
+            'font-family:system-ui,sans-serif', 'color:#fff', 'text-align:center'
+        ].join(';');
+
+        const panel = document.createElement('div');
+        panel.style.cssText = 'max-width:22rem;padding:1.5rem;line-height:1.5';
+        panel.innerHTML =
+            '<p style="font-size:1rem;font-weight:600;margin:0 0 .5rem">Connexion en cours…</p>' +
+            '<p style="font-size:.875rem;opacity:.8;margin:0 0 1rem">Terminez la connexion dans la fenêtre du SSO.</p>';
+
+        const back = document.createElement('button');
+        back.type = 'button';
+        back.textContent = 'Revenir à la fenêtre de connexion';
+        back.style.cssText = 'padding:.6rem 1rem;border-radius:.5rem;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;cursor:pointer;font:inherit';
+        back.addEventListener('click', () => {
+            try { popup.focus(); } catch (e) {}
+        });
+
+        panel.appendChild(back);
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
+
+        // Un leger delai evite une lutte de focus avec le navigateur.
+        let pending = null;
+        const refocus = () => {
+            if (pending) return;
+
+            pending = setTimeout(() => {
+                pending = null;
+                try {
+                    if (popup && !popup.closed) popup.focus();
+                } catch (e) {}
+            }, 120);
+        };
+
+        window.addEventListener('focus', refocus);
+
+        return {
+            release() {
+                window.removeEventListener('focus', refocus);
+                if (pending) clearTimeout(pending);
+                overlay.remove();
+            }
+        };
     }
 
     // Open SSO login popup
@@ -35,12 +135,16 @@ class SsoClient {
             'SSOLogin',
             `width=${this.popupWidth},height=${this.popupHeight},left=${(window.screen.width - this.popupWidth) / 2},top=${(window.screen.height - this.popupHeight) / 2}`
         );
-        setTimeout(() => {
-            if (!popup) {
-                alert('Please allow popups for this website');
-                return;
-            }
-        }, 1000);
+        // Un blocage se voit immediatement : window.open renvoie null. Plutot
+        // que d'alerter et de s'arreter la, on rend la main a l'appelant, qui
+        // bascule sur la redirection top-level.
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+            return false;
+        }
+
+        popup.focus();
+
+        const guard = this._holdPopupInFront(popup);
 
         // Message handler
         const messageHandler = (event) => {
@@ -96,6 +200,7 @@ class SsoClient {
         const cleanup = () => {
             window.removeEventListener('message', messageHandler);
             if (checkInterval) clearInterval(checkInterval);
+            guard.release();
         };
 
         // Add event listener
@@ -116,6 +221,8 @@ class SsoClient {
 
         // Focus on popup
         popup.focus();
+
+        return true;
     }
 
     // Open SSO login Model

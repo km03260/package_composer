@@ -24,6 +24,7 @@ const sso = new SsoClient({
 ssoServerUrl: '{{ config('sso.server_url') }}',
 clientId: '{{ config('sso.client_id') }}',
 secretKey: '{{ config('sso.client_secret') }}',
+redirectUri: '{{ route('auth.sso.authentication') }}',
 scopes: ['read', 'write']
 });
 
@@ -205,8 +206,11 @@ return msg.includes('network') ||
        msg.includes('net::');
 }
 
-function loginSSOModel() {
-sso.loginWithModal(
+function loginSSOModel(automatic = false) {
+// La popup laisse la page du module visible derriere elle. Si le
+// navigateur la bloque — ce qu'il fait par defaut hors clic — on
+// bascule sur la redirection top-level, qui aboutit toujours.
+const opened = sso.loginWithPopup(
 (data) => {
 updateUserUI(data);
 },
@@ -219,6 +223,16 @@ if (isServerNotFoundError(error)) {
 }
 }
 );
+
+if (!opened) {
+// Popup refusee par le navigateur. La fenetre parente ne bouge pas :
+// elle ne doit jamais quitter le module. L'utilisateur autorise les
+// fenetres surgissantes puis clique, un clic valant activation.
+showMessage(
+"Autorisez les fenêtres surgissantes pour ce site, puis cliquez sur « Se connecter avec le SSO ».",
+'error'
+);
+}
 }
 
 function updateUserUI(data) {
@@ -434,8 +448,11 @@ btn.textContent = original;
 });
 
 @if (($autoLoginSso ?? false))
-// Auto-open the SSO authentication modal (login page only — not after logout/prelogin).
+// Ouverture de la fenetre de connexion des l'arrivee sur la page, sans
+// geste utilisateur. Le SSO y est en contexte top-level, donc ses
+// cookies sont first-party : la session est partagee entre tous les
+// modules, quel que soit leur domaine.
 window.addEventListener('load', () => {
-document.getElementById('ssoLoginBtn').click();
+loginSSOModel(true);
 });
 @endif
