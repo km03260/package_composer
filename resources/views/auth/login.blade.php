@@ -18,6 +18,46 @@
                     Sign in with your SSO account
                 </p>
 
+                @if ($errors->any())
+                    {{-- Un echec d'authentification revient ici. Le bandeau, et
+                         surtout le fait de ne PAS rouvrir la popup ci-dessous,
+                         cassent la boucle /login -> popup -> /login. --}}
+                    <div class="mb-6 flex items-start gap-3 bg-red-50 border border-red-200 text-red-800 px-4 py-4 rounded-xl text-left shadow-sm">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <div>
+                            <p class="font-semibold text-sm">Connexion impossible</p>
+                            <p class="text-xs mt-1 text-red-600 leading-relaxed">{{ $errors->first() }}</p>
+                        </div>
+                    </div>
+                @endif
+
+                @if (!empty($ssoDiagnostic))
+                    {{-- Visible uniquement avec SSO_DEBUG=true, apres une tentative
+                         de connexion : dit ce qui n'a pas survecu entre la requete
+                         qui a connecte l'utilisateur et celle qui le renvoie ici. --}}
+                    <div class="mb-6 bg-amber-50 border border-amber-300 rounded-xl p-4 text-left">
+                        <p class="font-semibold text-sm text-amber-900">
+                            Diagnostic : {{ $ssoDiagnostic['verdict'] }}
+                        </p>
+                        <p class="text-xs mt-2 text-amber-800 leading-relaxed">
+                            {{ $ssoDiagnostic['detail'] }}
+                        </p>
+                        <table class="mt-3 w-full text-[11px] text-amber-900/80">
+                            @foreach ($ssoDiagnostic['contexte'] as $cle => $valeur)
+                                <tr class="border-t border-amber-200/60">
+                                    <td class="py-1 pr-3 font-mono align-top">{{ $cle }}</td>
+                                    <td class="py-1 font-mono break-all">{{ var_export($valeur, true) }}</td>
+                                </tr>
+                            @endforeach
+                        </table>
+                    </div>
+                @endif
+
                 <div id="loginSection" class="flex flex-col gap-3">
 
                     <button id="ssoLoginBtn"
@@ -101,7 +141,7 @@
 
 
     <x-slot name="extraJs">
-        @include('ssoauth::auth.partials.login-scripts', ['autoLoginSso' => true])
+        @include('ssoauth::auth.partials.login-scripts', ['autoLoginSso' => !$errors->any()])
     </x-slot>
 
 </x-ssoauth-layout-main>

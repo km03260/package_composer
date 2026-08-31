@@ -206,7 +206,50 @@ return msg.includes('network') ||
        msg.includes('net::');
 }
 
+// Garde-fou de boucle, cote navigateur.
+//
+// Le bandeau d'erreur de la page suffit quand l'echec est renvoye par le
+// serveur. Mais si c'est la *session* qui est perdue (cookie rejete, APP_KEY
+// differente d'un conteneur a l'autre...), l'erreur flashee disparait avec
+// elle : la page se croit neuve et rouvre la popup, indefiniment. Le
+// compteur ci-dessous vit dans sessionStorage, qui ne depend d'aucun cookie :
+// au-dela de 3 ouvertures automatiques en une minute, la popup ne se rouvre
+// plus toute seule et l'utilisateur reprend la main.
+const SSO_AUTO_GUARD = 'sso_auto_attempts';
+
+function ssoAutoAttemptAllowed(max = 3, windowMs = 60000) {
+let state = { n: 0, first: 0 };
+
+try {
+state = JSON.parse(sessionStorage.getItem(SSO_AUTO_GUARD)) || state;
+} catch (e) {}
+
+const now = Date.now();
+
+if (!state.first || now - state.first > windowMs) {
+state = { n: 0, first: now };
+}
+
+state.n++;
+
+try {
+sessionStorage.setItem(SSO_AUTO_GUARD, JSON.stringify(state));
+} catch (e) {}
+
+return state.n <= max;
+}
+
 function loginSSOModel(automatic = false) {
+if (automatic && !ssoAutoAttemptAllowed()) {
+showMessage(
+"La connexion SSO n'aboutit pas : vous revenez sur cette page a chaque tentative. "
++ "Cliquez sur « Sign in with SSO » pour reessayer, ou utilisez « Connexion hors SSO ».",
+'error',
+true
+);
+return;
+}
+
 // La popup laisse la page du module visible derriere elle. Si le
 // navigateur la bloque — ce qu'il fait par defaut hors clic — on
 // bascule sur la redirection top-level, qui aboutit toujours.
@@ -236,8 +279,9 @@ showMessage(
 }
 
 function updateUserUI(data) {
-window.location.href = `{{ route('auth.sso.authentication') }}?token=${data.token}`;
-
+// La navigation vers l'URL de callback est faite par sso-client.js, a
+// partir de `redirectUri`. La refaire ici lancait deux navigations
+// concurrentes vers deux URL potentiellement differentes.
 const loginBtn = document.getElementById('ssoLoginBtn');
 loginBtn.textContent = `Welcome, ${data.user.Prenom || data.user.Email}`;
 loginBtn.disabled = true;
@@ -289,7 +333,7 @@ messageDiv.innerHTML = `
 messageDiv.classList.remove('hidden');
 }
 
-function showMessage(text, type) {
+function showMessage(text, type, persist = false) {
 const messageDiv = document.getElementById('message');
 messageDiv.textContent = text;
 messageDiv.className =
@@ -298,6 +342,11 @@ messageDiv.className =
 : 'bg-green-100 text-green-700'
 }`;
 messageDiv.classList.remove('hidden');
+
+// Un message qui explique pourquoi la popup ne se rouvre plus doit rester
+// lisible : il ne s'efface pas au bout de trois secondes.
+if (persist) return;
+
 setTimeout(() => {
 messageDiv.textContent = '';
 messageDiv.className = 'mt-4 hidden';

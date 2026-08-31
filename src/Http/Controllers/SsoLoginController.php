@@ -5,9 +5,11 @@ namespace DevOps213\SSOauthenticated\Http\Controllers;
 use App\Http\Controllers\Controller;
 use DevOps213\SSOauthenticated\Http\Controllers\Concerns\InteractsWithDeviceSecurity;
 use DevOps213\SSOauthenticated\Models\SsoToken;
+use DevOps213\SSOauthenticated\Support\SsoLoginProbe;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Session;
 
@@ -46,25 +48,92 @@ class SsoLoginController extends Controller
 
     public function authentication(Request $request)
     {
+        // La popup et l'iframe renvoient `token` ; la redirection top-level
+        // renvoie `access_token`, nomme ainsi par le SSO.
+        $token = $request->input('token') ?: $request->input('access_token');
+
         try {
+            $ssoToken = (new SsoToken)::GetTokenRelatedUser($token);
+            $user = $ssoToken?->user;
 
-            // La popup et l'iframe renvoient `token` ; la redirection
-            // top-level renvoie `access_token`, nomme ainsi par le SSO.
-            $token = $request->input('token') ?: $request->input('access_token');
+            // Un token absent de `sso_tokens` (le serveur SSO ecrit dans une
+            // autre base, ou les horloges divergent et le token parait deja
+            // expire) et un `user_id` qui ne correspond a aucun utilisateur
+            // local donnent tous les deux $user === null. Sans ce garde-fou,
+            // `Auth::login(null)` leve une TypeError attrapee plus bas et la
+            // page de login rouvre la popup : boucle sans fin, sans message.
+            if (!$user) {
+                Log::warning('SSO authentication: aucun utilisateur pour ce token.', [
+                    'token_present' => (bool) $token,
+                    'token_trouve'  => (bool) $ssoToken,
+                    'user_id'       => $ssoToken->user_id ?? null,
+                    'user_model'    => $this->userModel(),
+                    'host'          => $request->getHost(),
+                ]);
 
-            $user = (new SsoToken)::GetTokenRelatedUser($token)?->user;
+                return $this->backToLoginWithError(
+                    $ssoToken
+                        ? __("Votre compte SSO n'est rattache a aucun utilisateur de cette application.")
+                        : __('Session SSO invalide ou expiree. Veuillez reessayer.')
+                );
+            }
 
             Auth::login($user);
 
+            // Trace host / scheme / id de session au moment ou la connexion
+            // reussit. Si l'utilisateur retombe malgre tout sur /login, la
+            // requete suivante sait dire ce qui n'a pas survecu entre les deux.
+            SsoLoginProbe::mark($request, $user);
+
             $url = session('url.intended');
 
-            $path = Str::after($url, url('/'));
+            // `Str::after` renvoie une chaine vide quand aucune URL n'est
+            // memorisee : `?:` et non `??`, sinon on redirige vers ''.
+            $path = $url ? Str::after($url, url('/')) : null;
 
-            $_redirect = $request->redirect_url ?? $path ?? '/';
+            $_redirect = $request->redirect_url ?: ($path ?: '/');
+
             return redirect($_redirect);
         } catch (\Throwable $th) {
-            return redirect('/login');
+            Log::error('SSO authentication failed.', [
+                'error' => $th->getMessage(),
+                'file'  => $th->getFile() . ':' . $th->getLine(),
+                'host'  => $request->getHost(),
+            ]);
+
+            return $this->backToLoginWithError(
+                __('Echec de la connexion SSO. Veuillez reessayer ou utiliser la connexion hors SSO.')
+            );
         }
+    }
+
+    /**
+     * URL de la page de connexion de l'application hote.
+     *
+     * Le nom `login` est celui d'`Auth::routes()`; `sso.login` est celui du
+     * package. Un chemin en dur ne convient pas : l'application peut avoir
+     * prefixe les routes du package.
+     */
+    protected function loginUrl(): string
+    {
+        foreach (['login', 'sso.login'] as $name) {
+            if (Route::has($name)) {
+                return route($name);
+            }
+        }
+
+        return url('/login');
+    }
+
+    /**
+     * Renvoyer vers la page de login en signalant l'echec.
+     *
+     * L'erreur en session coupe l'ouverture automatique de la popup SSO :
+     * l'utilisateur voit le message au lieu de reboucler indefiniment.
+     */
+    protected function backToLoginWithError(string $message)
+    {
+        return redirect()->to($this->loginUrl())->withErrors(['sso' => $message]);
     }
 
     /**
@@ -87,7 +156,7 @@ class SsoLoginController extends Controller
                 if ($ajax) {
                     return response()->json(['success' => false, 'message' => $message], 422);
                 }
-                return redirect('/login')->withErrors(['usersso' => $message]);
+                return $this->backToLoginWithError($message);
             }
 
             // --- dfa: device matching + e-mail verification code ---
@@ -123,7 +192,7 @@ class SsoLoginController extends Controller
                 if ($ajax) {
                     return response()->json(['success' => false, 'message' => $message], 403);
                 }
-                return redirect('/login')->withErrors(['usersso' => $message]);
+                return $this->backToLoginWithError($message);
             }
 
             Auth::login($user);
@@ -151,7 +220,9 @@ class SsoLoginController extends Controller
                     'message' => __('Échec de la connexion par QR code. Veuillez réessayer.'),
                 ], 500);
             }
-            return redirect('/login');
+            return $this->backToLoginWithError(
+                __('Echec de la connexion par QR code. Veuillez reessayer.')
+            );
         }
     }
 

@@ -176,14 +176,19 @@ class SsoClient {
 
                 cleanup();
 
-                // ✅ CALL SUCCESS FIRST
                 onSuccess?.({
                     token: event.data.access_token,
                     user: event.data.user
                 });
 
-                // ✅ THEN redirect (optional)
-                window.location.href = `/auth/authentication?token=${event.data.access_token}`;
+                // Le retour se fait sur l'URL de callback configuree. Un
+                // chemin en dur casse des que l'application prefixe les
+                // routes du package : la navigation aboutit alors sur une
+                // 404 renvoyee vers /login, et la boucle recommence.
+                const separator = this.redirectUri.indexOf('?') === -1 ? '?' : '&';
+
+                window.location.href = this.redirectUri + separator +
+                    'token=' + encodeURIComponent(event.data.access_token);
 
 
             } else if (event.data.type === 'SSO_LOGIN_ERROR') {

@@ -5,6 +5,8 @@ namespace DevOps213\SSOauthenticated;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
+use DevOps213\SSOauthenticated\Support\SsoLoginProbe;
 use DevOps213\SSOauthenticated\Console\InstallSSOAuthenticated;
 use DevOps213\SSOauthenticated\Http\Middleware\SsoAuth;
 use DevOps213\SSOauthenticated\Http\Middleware\ResolveSessionDomain;
@@ -58,6 +60,21 @@ class SSOAuthenticatedServiceProvider extends ServiceProvider
             $this->app->make(\Illuminate\Contracts\Http\Kernel::class)
                 ->pushMiddleware(ResolveSessionDomain::class);
         }
+
+        // 7️⃣c Diagnostic de la boucle « connexion reussie -> retour /login ».
+        // Un composeur plutot qu'une variable passee par le controleur : la
+        // page de login est souvent rendue par l'application hote (son propre
+        // LoginController), qui ne connait pas la sonde. Les deux noms de vue
+        // sont couverts : celle du package et sa copie publiee.
+        View::composer(
+            ['ssoauth::auth.login', 'ssoauth.auth.login'],
+            function ($view) {
+                $view->with(
+                    'ssoDiagnostic',
+                    SsoLoginProbe::enabled() ? SsoLoginProbe::diagnose(request()) : null
+                );
+            }
+        );
 
         // 8️⃣ Register Blade component
         Blade::component('ssoauth-layout-main', \DevOps213\SSOauthenticated\View\Components\Layout\Main::class);
